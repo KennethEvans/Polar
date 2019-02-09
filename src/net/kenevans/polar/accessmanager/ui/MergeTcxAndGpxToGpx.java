@@ -165,14 +165,7 @@ public class MergeTcxAndGpxToGpx implements IConstants
                 }
                 switch(saveMode) {
                 case PROMPT:
-                    int result = JOptionPane.showConfirmDialog(null,
-                        "File exists:" + LS + gpxFile.getPath() + LS
-                            + "OK to overwrite?",
-                        "File Exists", JOptionPane.OK_CANCEL_OPTION);
-                    if(result != JOptionPane.OK_OPTION) {
-                        continue;
-                    }
-                    break;
+                     break;
                 case SKIP:
                     continue;
                 case OVERWRITE:

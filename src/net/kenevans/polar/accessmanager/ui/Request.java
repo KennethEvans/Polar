@@ -1,4 +1,4 @@
-package net.kenevans.polar.utils;
+package net.kenevans.polar.accessmanager.ui;
 
 import java.io.BufferedReader;
 import java.io.DataOutputStream;
@@ -6,23 +6,21 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
 /*
- * Created on Jan 31, 2019
+ * Created on Feb 8, 2019
  * By Kenneth Evans, Jr.
  */
 
-public class HttpUtils
+public class Request
 {
     public static final String LS = System.getProperty("line.separator");
-    public static final String CONN_NOINPUT = "Cannot read input stream";
-    public static final String CONN_NOERROR = "Cannot read error stream";
-    public static final String CONN_WRITE_ERROR = "Cannot write output stream";
-    public static final String CONN_OK = "OK";
     private static final Map<Integer, String> HTTP_CODES = new HashMap<Integer, String>() {
         private static final long serialVersionUID = 1L;
         {
@@ -69,119 +67,195 @@ public class HttpUtils
         }
     };
 
+    enum AuthMode {
+        NONE, BASIC, BEARER
+    };
+    enum Method {
+        GET, PUT, POST,DELETE,
+    };
+
+
+    private URL url;
+    private HttpURLConnection conn;
+    boolean error = false;
+    public String lastError;
+
+    public Request(Method method, String urlString) {
+        if(urlString == null || urlString.isEmpty()) {
+            return;
+        }
+        // Get the URL
+        try {
+            url = new URL(urlString);
+        } catch(MalformedURLException ex) {
+            error = true;
+            lastError = "Failed to create URL" + LS + ex.getMessage();
+            return;
+        }
+        // Get the connection
+        try {
+            conn = (HttpURLConnection)url.openConnection();
+            conn.setRequestMethod(method.toString());
+        } catch(IOException ex) {
+            error = true;
+            lastError = "Failed to creat HttpURLConnection" + LS
+                + ex.getMessage();
+            return;
+        }
+        if(method == Method.POST || method == Method.PUT) {
+            conn.setDoOutput(true);
+        }
+    }
+
+    public void setAuthorization(AuthMode mode, String code) {
+        if(conn == null) {
+            lastError = "No connection";
+            return;
+        }
+        switch(mode) {
+        case BASIC:
+            conn.setRequestProperty("Authorization", "Basic " + code);
+            break;
+        case BEARER:
+            conn.setRequestProperty("Authorization", "Bearer " + code);
+            break;
+        default:
+            break;
+        }
+    }
+
+    public void setRequestProperty(String key, String value) {
+        if(conn == null) {
+            lastError = "No connection";
+            return;
+        }
+        conn.setRequestProperty(key, value);
+    }
+    
+    public boolean writeOutput(String output) {
+        if(conn == null) {
+            lastError = "No connection";
+            return false;
+        }
+        byte[] postData = output.getBytes(StandardCharsets.UTF_8);
+        DataOutputStream out = null;
+        try {
+            out = new DataOutputStream(conn.getOutputStream());
+            out.write(postData);
+            out.flush();
+            out.close();
+            lastError = "";
+            return true;
+        } catch(IOException ex) {
+            lastError = "Error writing output" + LS + ex.getMessage();
+            return false;
+        }
+    }
+
+    public Integer getResponseCode() {
+        lastError = "";
+        if(conn == null) {
+            lastError = "No connection";
+            return null;
+        }
+        try {
+            return conn.getResponseCode();
+        } catch(IOException ex) {
+            lastError = "No connection";
+            return null;
+        }
+    }
+
+    public String getInput() {
+        lastError = "";
+       if(conn == null) {
+            lastError = "No connection";
+            return null;
+        }
+        InputStream is = null;
+        String result = null;
+        try {
+            is = conn.getInputStream();
+            if(is == null) {
+                lastError = "Cannot get input stream";
+                return null;
+            }
+        } catch(IOException ex) {
+            lastError = "Error getting input stream" + LS
+                + ex.getMessage();
+           return null;
+        }
+        BufferedReader in = new BufferedReader(new InputStreamReader(is));
+        String inputLine;
+        StringBuffer content = new StringBuffer();
+        try {
+            while((inputLine = in.readLine()) != null) {
+                content.append(inputLine);
+            }
+            result = content.toString();
+            in.close();
+        } catch(IOException ex) {
+            lastError = "Error reading input stream" + LS
+                + ex.getMessage();
+            if(content != null && content.toString() != null) {
+                return content.toString() + LS + lastError;
+            } else {
+                return null;
+            }
+        }
+        return result;
+    }
+
+    public String getError() {
+        lastError = "";
+        if(conn == null) {
+            lastError = "No connection";
+            return null;
+        }
+        InputStream is = null;
+        String result = null;
+        is = conn.getErrorStream();
+        if(is == null) {
+            lastError = "Failed to get error stream";
+            return null;
+        }
+        BufferedReader in = new BufferedReader(new InputStreamReader(is));
+        String inputLine;
+        StringBuffer content = new StringBuffer();
+        try {
+            while((inputLine = in.readLine()) != null) {
+                content.append(inputLine);
+            }
+            result = content.toString();
+            in.close();
+        } catch(IOException ex) {
+            lastError = "Error reading error stream" + LS + ex.getMessage();
+            if(content != null && content.toString() != null) {
+                return content.toString() + LS + lastError;
+            } else {
+                return null;
+            }
+        }
+        return result;
+    }
+
+    public Map<String, List<String>> getHeaderFields() {
+        lastError = "";
+        if(conn == null) {
+            lastError = "No connection";
+            return null;
+        }
+        return conn.getHeaderFields();
+    }
+
     /**
      * Gets the status message for a given status code.
      *
      * @param statusCode
      * @return The status message or null if the code is not found.
      */
-    public String getStatusMessage(int statusCode) {
+    public static String getStatusMessage(int statusCode) {
         return HTTP_CODES.get(statusCode);
-    }
-
-    public static String getInput(HttpURLConnection con) {
-        if(con == null) {
-            return null;
-        }
-        InputStream is = null;
-        String result = null;
-        try {
-            is = con.getInputStream();
-            if(con == null || is == null) {
-                return CONN_NOINPUT;
-            }
-        } catch(IOException ex) {
-            return CONN_NOINPUT;
-        }
-        BufferedReader in = new BufferedReader(new InputStreamReader(is));
-        String inputLine;
-        StringBuffer content = new StringBuffer();
-        try {
-            while((inputLine = in.readLine()) != null) {
-                content.append(inputLine);
-            }
-            result = content.toString();
-            in.close();
-        } catch(IOException ex) {
-            String msg = "Error reading input stream" + LS + ex.getMessage();
-            if(content != null && content.toString() != null) {
-                return content.toString() + LS + msg;
-            } else {
-                return msg;
-            }
-        }
-        return result;
-    }
-
-    public static String getError(HttpURLConnection con) {
-        if(con == null) {
-            return null;
-        }
-        InputStream is = null;
-        String result = null;
-        is = con.getErrorStream();
-        if(con == null || is == null) {
-            return CONN_NOERROR;
-        }
-        BufferedReader in = new BufferedReader(new InputStreamReader(is));
-        String inputLine;
-        StringBuffer content = new StringBuffer();
-        try {
-            while((inputLine = in.readLine()) != null) {
-                content.append(inputLine);
-            }
-            result = content.toString();
-            in.close();
-        } catch(IOException ex) {
-            String msg = "Error reading error stream" + LS + ex.getMessage();
-            if(content != null && content.toString() != null) {
-                return content.toString() + LS + msg;
-            } else {
-                return msg;
-            }
-        }
-        return result;
-    }
-
-    public static String writeOutput(HttpURLConnection con, byte[] output) {
-        if(con == null) {
-            return null;
-        }
-        DataOutputStream out = null;
-        try {
-            out = new DataOutputStream(con.getOutputStream());
-            out.write(output);
-            out.flush();
-            out.close();
-            return CONN_OK;
-        } catch(IOException ex) {
-            return CONN_WRITE_ERROR;
-        }
-    }
-
-    public static String getHeaderFields(HttpURLConnection con) {
-        if(con == null) {
-            return null;
-        }
-        StringBuilder sb = new StringBuilder();
-        con.getHeaderFields().entrySet().stream()
-            .filter(entry -> entry.getKey() != null).forEach(entry -> {
-                sb.append(entry.getKey()).append(": ");
-                List<String> headerValues = entry.getValue();
-                Iterator<String> it = headerValues.iterator();
-                if(it.hasNext()) {
-                    sb.append(it.next());
-                    while(it.hasNext()) {
-                        sb.append(", ").append(it.next());
-                    }
-                }
-                sb.append(LS);
-            });
-        if(sb == null) {
-            return null;
-        } else {
-            return sb.toString();
-        }
     }
 
 }

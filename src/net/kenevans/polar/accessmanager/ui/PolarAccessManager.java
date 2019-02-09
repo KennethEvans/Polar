@@ -122,9 +122,9 @@ public class PolarAccessManager extends JFrame
         });
         menu.add(menuItem);
 
-        // Initialization
+        // Basic
         menu = new JMenu();
-        menu.setText("Initialization");
+        menu.setText("Basic");
         menuBar.add(menu);
 
         // Set access code
@@ -132,7 +132,7 @@ public class PolarAccessManager extends JFrame
         menuItem.setText("Set Access Code");
         menuItem.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent ae) {
-                PolarAccessManager.this.appendLineText("Set access code");
+                PolarAccessManager.this.appendLineText(LS + "Set access code");
                 String res = JOptionPane.showInputDialog(
                     "Enter new access code", Manager.access_code);
                 if(res != null) {
@@ -151,7 +151,8 @@ public class PolarAccessManager extends JFrame
         menuItem.setText("Set Client User ID");
         menuItem.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent ae) {
-                PolarAccessManager.this.appendLineText("Set client-user-id");
+                PolarAccessManager.this
+                    .appendLineText(LS + "Set client-user-id");
                 String res = JOptionPane.showInputDialog(
                     "Enter new client-user-id", Manager.client_user_id);
                 if(res != null) {
@@ -165,7 +166,7 @@ public class PolarAccessManager extends JFrame
             }
         });
         menu.add(menuItem);
-        
+
         menu.add(new JSeparator());
 
         // Get access
@@ -183,10 +184,30 @@ public class PolarAccessManager extends JFrame
         menuItem.setText("Register User");
         menuItem.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent ae) {
-                PolarAccessManager.this.appendLineText("registerUser");
+                PolarAccessManager.this.appendLineText(LS + "registerUser");
                 User user = Manager.registerUser();
                 if(user == null) {
                     appendLineText("registerUser failed");
+                    return;
+                }
+                appendLineText("User:");
+                Gson gson = new Gson();
+                String json = gson.toJson(user);
+                appendLineText(JsonUtils.prettyFormat(json));
+            }
+        });
+        menu.add(menuItem);
+
+        // Get user information
+        menuItem = new JMenuItem();
+        menuItem.setText("Get User Information");
+        menuItem.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent ae) {
+                PolarAccessManager.this
+                    .appendLineText(LS + "getUserInformation");
+                User user = Manager.getUserInformation();
+                if(user == null) {
+                    appendLineText("getUserInformation failed");
                     return;
                 }
                 appendLineText("User:");
@@ -202,13 +223,33 @@ public class PolarAccessManager extends JFrame
         menuItem.setText("Delete User");
         menuItem.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent ae) {
-                PolarAccessManager.this.appendLineText("deleteUser");
+                PolarAccessManager.this.appendLineText(LS + "deleteUser");
                 boolean res = Manager.deleteUser();
                 if(res) {
                     appendLineText("deleteUser succeeded");
                 } else {
                     appendLineText("deleteUser failed");
                 }
+                return;
+            }
+        });
+        menu.add(menuItem);
+
+        menu.add(new JSeparator());
+
+        // Get rate limits
+        menuItem = new JMenuItem();
+        menuItem.setText("Get Rate Limits");
+        menuItem.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent ae) {
+                PolarAccessManager.this.appendLineText(LS + "getRateLimits");
+                String data = Manager.getRateLimits();
+                if(data == null) {
+                    appendLineText("getRateLimits failed");
+                    return;
+                }
+                appendLineText("Rate Limits:");
+                appendLineText(data);
                 return;
             }
         });
@@ -224,10 +265,11 @@ public class PolarAccessManager extends JFrame
         menuItem.setText("Get Available Data");
         menuItem.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent ae) {
-                PolarAccessManager.this.appendLineText("list");
+                PolarAccessManager.this
+                    .appendLineText(LS + "listNotifications");
                 String data = Manager.listNotifications();
                 if(data == null) {
-                    appendLineText("list failed");
+                    appendLineText("listNotifications failed");
                     return;
                 }
                 appendLineText("Available Data:");
@@ -251,7 +293,8 @@ public class PolarAccessManager extends JFrame
         menuItem.setToolTipText("Converts TCX filesto GPX.");
         menuItem.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent ae) {
-                PolarAccessManager.this.appendLineText("Convert TCX to GPX");
+                PolarAccessManager.this
+                    .appendLineText(LS + "Convert TCX to GPX");
                 MergeTcxAndGpxToGpx merge = new MergeTcxAndGpxToGpx(
                     PolarAccessManager.this, false);
                 merge.processTcxFiles();
@@ -267,7 +310,7 @@ public class PolarAccessManager extends JFrame
         menuItem.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent ae) {
                 PolarAccessManager.this
-                    .appendLineText("Merge TCX/GPX file pairs to GPX");
+                    .appendLineText(LS + "Merge TCX/GPX file pairs to GPX");
                 MergeTcxAndGpxToGpx merge = new MergeTcxAndGpxToGpx(
                     PolarAccessManager.this, true);
                 merge.processTcxFiles();
@@ -358,7 +401,7 @@ public class PolarAccessManager extends JFrame
             textArea.setText(oldText + text);
 
         }
-        textArea.setCaretPosition(0);
+        textArea.setCaretPosition(textArea.getDocument().getLength());
     }
 
     /**
@@ -380,12 +423,12 @@ public class PolarAccessManager extends JFrame
 
     private void getAccess() {
         appendLineText("getAccess");
-        String accessUrl = Manager.getAthorizationURL();
+        String accessUrl = Manager.getAuthorizationURL();
         if(accessUrl == null) {
             appendLineText("No access code");
             return;
         }
-        webPageDialog = new WebPageDialog(this, Manager.getAthorizationURL());
+        webPageDialog = new WebPageDialog(this, Manager.getAuthorizationURL());
         webPageDialog.setVisible(true);
     }
 

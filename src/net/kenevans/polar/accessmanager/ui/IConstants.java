@@ -11,7 +11,7 @@ public interface IConstants
 
     public static final String AUTHORIZATION_URL_PREFIX = "https://flow.polar.com/oauth2/authorization?response_type=code&client_id=";
     public static final String ACCESS_TOKEN_URL = "https://polarremote.com/v2/oauth2/token";
-    public static final String ACCESS_LINK_URL = "https://www.polaraccesslink.com/v3";
+    public static final String ACCESS_LINK_URL = "https://www.polaraccesslink.com/v3/";
 
     /**
      * The file where the encrypted access code is kept (so it won't be
