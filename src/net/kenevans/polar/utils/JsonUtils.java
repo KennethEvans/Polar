@@ -8,6 +8,7 @@ import java.nio.file.Paths;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 
@@ -47,10 +48,25 @@ public class JsonUtils
      * @return
      */
     public static String prettyFormat(String jsonString) {
+        String prettyJson;
+        JsonElement element = null;
         JsonParser parser = new JsonParser();
-        JsonObject json = parser.parse(jsonString).getAsJsonObject();
+        try {
+            element = parser.parse(jsonString);
+        } catch(Exception ex) {
+            return "Got exception parsing:" + Utils.LS + jsonString + Utils.LS
+                + ex.getMessage();
+        }
+        if(element == null) {
+            return "Failed to parse:" + Utils.LS + jsonString;
+        }
+        if(!element.isJsonObject()) {
+            return "Not valid JSON:" + Utils.LS + jsonString;
+        }
+
+        JsonObject json = element.getAsJsonObject();
         Gson gson = new GsonBuilder().setPrettyPrinting().create();
-        String prettyJson = gson.toJson(json);
+        prettyJson = gson.toJson(json);
         return prettyJson;
     }
 

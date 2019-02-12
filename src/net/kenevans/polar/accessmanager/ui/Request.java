@@ -75,8 +75,8 @@ public class Request
     };
 
 
-    private URL url;
-    private HttpURLConnection conn;
+    public URL url;
+    public HttpURLConnection conn;
     boolean error = false;
     public String lastError;
 

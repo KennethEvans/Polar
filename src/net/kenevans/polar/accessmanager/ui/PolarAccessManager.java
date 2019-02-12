@@ -7,6 +7,9 @@ import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.net.HttpURLConnection;
+import java.util.Date;
+import java.util.List;
 
 import javax.swing.JFrame;
 import javax.swing.JMenu;
@@ -22,6 +25,11 @@ import javax.swing.UIManager;
 import com.google.gson.Gson;
 
 import net.kenevans.polar.accessmanager.classes.AccessToken;
+import net.kenevans.polar.accessmanager.classes.Exercise;
+import net.kenevans.polar.accessmanager.classes.ExerciseHash;
+import net.kenevans.polar.accessmanager.classes.Exercises;
+import net.kenevans.polar.accessmanager.classes.ExercisesHash;
+import net.kenevans.polar.accessmanager.classes.TransactionLocation;
 import net.kenevans.polar.accessmanager.classes.User;
 import net.kenevans.polar.utils.AboutBoxPanel;
 import net.kenevans.polar.utils.ImageUtils;
@@ -54,6 +62,8 @@ public class PolarAccessManager extends JFrame
     public PolarAccessManager() {
         uiInit();
 
+        System.out.println("PolarAccessManager started at: " + new Date());
+
         Manager.getPreferences();
 
         // Debug WebPage
@@ -79,11 +89,14 @@ public class PolarAccessManager extends JFrame
         appendLineText("token=" + Manager.token);
         appendLineText("client_user_id=" + Manager.client_user_id);
         appendLineText("polar_user_id=" + Manager.polar_user_id);
+        appendLineText(
+            "exercise_transaction_id=" + Manager.exercise_transaction_id);
 
         // TEMPORARY
         // Manager.polar_user_id="9839019";
         // Manager.token="ef0f9246a9d0216e9d5a4c21c349d391";
         // Manager.setPreferences();
+        // Manager.exercise_transaction_id = 173373912;
     }
 
     /**
@@ -132,7 +145,7 @@ public class PolarAccessManager extends JFrame
         menuItem.setText("Set Access Code");
         menuItem.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent ae) {
-                PolarAccessManager.this.appendLineText(LS + "Set access code");
+                appendLineText(LS + "Set access code");
                 String res = JOptionPane.showInputDialog(
                     "Enter new access code", Manager.access_code);
                 if(res != null) {
@@ -141,7 +154,7 @@ public class PolarAccessManager extends JFrame
                     PolarAccessManager.this
                         .appendLineText("access_code=" + Manager.access_code);
                 } else {
-                    PolarAccessManager.this.appendLineText("Aborted");
+                    appendLineText("Aborted");
                 }
             }
         });
@@ -158,10 +171,9 @@ public class PolarAccessManager extends JFrame
                 if(res != null) {
                     Manager.client_user_id = res;
                     Manager.setPreferences();
-                    PolarAccessManager.this.appendLineText(
-                        "polar_user_id=" + Manager.client_user_id);
+                    appendLineText("polar_user_id=" + Manager.client_user_id);
                 } else {
-                    PolarAccessManager.this.appendLineText("Aborted");
+                    appendLineText("Aborted");
                 }
             }
         });
@@ -184,15 +196,16 @@ public class PolarAccessManager extends JFrame
         menuItem.setText("Register User");
         menuItem.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent ae) {
-                PolarAccessManager.this.appendLineText(LS + "registerUser");
-                User user = Manager.registerUser();
-                if(user == null) {
-                    appendLineText("registerUser failed");
+                appendLineText(LS + "registerUser");
+                User obj = Manager.registerUser(true);
+                if(obj == null) {
+                    appendLineText("registerUser failed "
+                        + Manager.getLastResponseCodeString());
                     return;
                 }
                 appendLineText("User:");
                 Gson gson = new Gson();
-                String json = gson.toJson(user);
+                String json = gson.toJson(obj);
                 appendLineText(JsonUtils.prettyFormat(json));
             }
         });
@@ -205,9 +218,10 @@ public class PolarAccessManager extends JFrame
             public void actionPerformed(ActionEvent ae) {
                 PolarAccessManager.this
                     .appendLineText(LS + "getUserInformation");
-                User user = Manager.getUserInformation();
+                User user = Manager.getUserInformation(true);
                 if(user == null) {
-                    appendLineText("getUserInformation failed");
+                    appendLineText("getUserInformation failed "
+                        + Manager.getLastResponseCodeString());
                     return;
                 }
                 appendLineText("User:");
@@ -223,12 +237,13 @@ public class PolarAccessManager extends JFrame
         menuItem.setText("Delete User");
         menuItem.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent ae) {
-                PolarAccessManager.this.appendLineText(LS + "deleteUser");
-                boolean res = Manager.deleteUser();
+                appendLineText(LS + "deleteUser");
+                boolean res = Manager.deleteUser(true);
                 if(res) {
                     appendLineText("deleteUser succeeded");
                 } else {
-                    appendLineText("deleteUser failed");
+                    appendLineText("deleteUser failed "
+                        + Manager.getLastResponseCodeString());
                 }
                 return;
             }
@@ -242,10 +257,11 @@ public class PolarAccessManager extends JFrame
         menuItem.setText("Get Rate Limits");
         menuItem.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent ae) {
-                PolarAccessManager.this.appendLineText(LS + "getRateLimits");
-                String data = Manager.getRateLimits();
+                appendLineText(LS + "getRateLimits");
+                String data = Manager.getRateLimits(true);
                 if(data == null) {
-                    appendLineText("getRateLimits failed");
+                    appendLineText("getRateLimits failed "
+                        + Manager.getLastResponseCodeString());
                     return;
                 }
                 appendLineText("Rate Limits:");
@@ -267,16 +283,157 @@ public class PolarAccessManager extends JFrame
             public void actionPerformed(ActionEvent ae) {
                 PolarAccessManager.this
                     .appendLineText(LS + "listNotifications");
-                String data = Manager.listNotifications();
-                if(data == null) {
-                    appendLineText("listNotifications failed");
+                String json = Manager.listNotifications(true);
+                if(json == null) {
+                    appendLineText("listNotifications failed "
+                        + Manager.getLastResponseCodeString());
                     return;
                 }
                 appendLineText("Available Data:");
                 // Gson gson = new Gson();
                 // String json = gson.toJson(user);
-                // appendLineText(JsonUtils.prettyFormat(json));
-                appendLineText(data);
+                appendLineText(JsonUtils.prettyFormat(json));
+                // appendLineText(json);
+                return;
+            }
+        });
+        menu.add(menuItem);
+
+        // List exercise
+        menuItem = new JMenuItem();
+        menuItem.setText("Get Exercises Hash");
+        menuItem.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent ae) {
+                appendLineText(LS + "getExercisesHash");
+                ExercisesHash obj = Manager.getExercisesHash(true);
+                if(obj == null) {
+                    appendLineText("getExercisesHash failed "
+                        + Manager.getLastResponseCodeString());
+                    return;
+                }
+                appendLineText("Exercises Hash:");
+                List<ExerciseHash> exerciseList = obj.exercisesHash;
+                if(exerciseList == null || exerciseList.isEmpty()) {
+                    appendLineText("No exercises");
+                    return;
+                }
+                int nExercise = 0;
+                for(ExerciseHash exercise : exerciseList) {
+                    nExercise++;
+                    appendLineText("Exercise " + nExercise);
+                    appendLineText("  id=" + exercise.id);
+                    appendLineText("  start_time=" + exercise.startTime);
+                    appendLineText("  upload_time=" + exercise.uploadTime);
+                    appendLineText("  sport=" + exercise.sport);
+                    appendLineText(
+                        "  detailed_sport_info=" + exercise.detailedSportInfo);
+                    appendLineText("  duration=" + exercise.duration);
+                    appendLineText("  distance=" + exercise.distance);
+                }
+                return;
+            }
+        });
+        menu.add(menuItem);
+
+        menu.add(new JSeparator());
+
+        // Get exercise transaction id
+        menuItem = new JMenuItem();
+        menuItem.setText("Get Exercise Transaction ID");
+        menuItem.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent ae) {
+                appendLineText(LS + "getExerciseTranslationLocation");
+                TransactionLocation obj = Manager
+                    .getExerciseTranslationLocation(true);
+                if(obj == null) {
+                    appendLineText("getExerciseTranslationLocation failed "
+                        + Manager.getLastResponseCodeString());
+                    return;
+                }
+                appendLineText(
+                    "New exercise_token-id=" + Manager.exercise_transaction_id);
+                appendLineText("Transaction Location:");
+                Gson gson = new Gson();
+                String json = gson.toJson(obj);
+                appendLineText(JsonUtils.prettyFormat(json));
+                return;
+            }
+        });
+        menu.add(menuItem);
+
+        // Get exercise list
+        menuItem = new JMenuItem();
+        menuItem.setText("Get Exercise List");
+        menuItem.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent ae) {
+                appendLineText(LS + "getExerciseList");
+                Exercises obj = Manager.getExerciseList(true);
+                if(obj == null) {
+                    appendLineText("getExerciseList failed "
+                        + Manager.getLastResponseCodeString());
+                    return;
+                }
+                appendLineText("Exercise List:");
+                List<String> exerciseList = obj.exercises;
+                if(exerciseList == null) {
+                    appendLineText("Exercise List is null");
+                    return;
+                }
+                if(exerciseList.isEmpty()) {
+                    appendLineText("Exercise List is empty");
+                    return;
+                }
+                for(String exercise : exerciseList) {
+                    appendLineText(exercise);
+                }
+                return;
+            }
+        });
+        menu.add(menuItem);
+
+        // Get exercise summaries
+        menuItem = new JMenuItem();
+        menuItem.setText("Get Exercise Summaries");
+        menuItem.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent ae) {
+                appendLineText(LS + "getExerciseSummaries");
+                if(Manager.exerciseList == null
+                    || Manager.exerciseList.isEmpty()) {
+                    appendLineText("No exercises");
+                    return;
+                }
+                Exercise obj;
+                int nExercise = 0;
+                for(String exercise : Manager.exerciseList) {
+                    nExercise++;
+                    obj = Manager.getExerciseSummary(exercise, true);
+                    if(obj == null) {
+                        appendLineText("getExerciseSummary failed "
+                            + Manager.getLastResponseCodeString() + LS
+                            + "for exercise " + nExercise + LS + exercise);
+                        continue;
+                    }
+                    appendLineText("Exercise " + nExercise);
+                    appendLineText("  start-time=" + obj.startTime);
+                    appendLineText("  upload-time=" + obj.uploadTime);
+                    appendLineText("  sport=" + obj.sport);
+                    appendLineText(
+                        "  detailed-sport-info=" + obj.detailedSportInfo);
+                    appendLineText("  duration=" + obj.duration);
+                    appendLineText("  distance=" + obj.distance);
+                }
+                return;
+            }
+        });
+        menu.add(menuItem);
+
+        // Get gpx
+        menuItem = new JMenuItem();
+        menuItem.setText("Get GPX");
+        menuItem.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent ae) {
+                appendLineText(LS + "getGpx");
+                getGpx();
                 return;
             }
         });
@@ -346,7 +503,7 @@ public class PolarAccessManager extends JFrame
                 "Got code. OK to get new token?", "Confirmation",
                 JOptionPane.OK_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE);
             if(selection == JOptionPane.OK_OPTION) {
-                AccessToken at = Manager.getToken(code);
+                AccessToken at = Manager.getToken(code, true);
                 if(at == null) {
                     appendLineText("Failed to get token");
                     return;
@@ -422,7 +579,7 @@ public class PolarAccessManager extends JFrame
     }
 
     private void getAccess() {
-        appendLineText("getAccess");
+        appendLineText(LS + "getAccess");
         String accessUrl = Manager.getAuthorizationURL();
         if(accessUrl == null) {
             appendLineText("No access code");
@@ -430,6 +587,64 @@ public class PolarAccessManager extends JFrame
         }
         webPageDialog = new WebPageDialog(this, Manager.getAuthorizationURL());
         webPageDialog.setVisible(true);
+    }
+
+    private void getGpx() {
+        // Get a new transaction-id if available
+        Manager.getExerciseTranslationLocation(false);
+        appendLineText("getExerciseTranslationLocation() returned "
+            + Manager.getLastResponseCodeString());
+        // Get the exerciseList
+        Exercises exercises = Manager.getExerciseList(false);
+        appendLineText("getExerciseList() returned "
+            + Manager.getLastResponseCodeString());
+        switch(Manager.lastResponseCode) {
+        case HttpURLConnection.HTTP_OK:
+            break;
+        case HttpURLConnection.HTTP_NO_CONTENT:
+            appendLineText("There are no exercises");
+            return;
+        case HttpURLConnection.HTTP_NOT_FOUND:
+            appendLineText(Manager.getLastResponseCodeString()
+                + " (May need a new transaction-id, so rerun getGpx)");
+            return;
+        default:
+            appendLineText(Manager.getLastResponseCodeString());
+            return;
+        }
+        if(exercises == null) {
+            appendLineText("getExerciseList() returned null");
+            return;
+        }
+        // Loop over exercises
+        List<String> exerciseList = exercises.exercises;
+        if(exerciseList == null) {
+            appendLineText("exerciseList is null");
+            return;
+        }
+        if(exerciseList.isEmpty()) {
+            appendLineText("exerciseList is empty");
+            return;
+        }
+        int nExercise = 0;
+        for(String exercise : Manager.exerciseList) {
+            nExercise++;
+            String url = exercise + "/gpx";
+            String gpx = Manager.getGpx(url, false);
+            appendLineText(nExercise + " getGpx() returned "
+                + Manager.getLastResponseCodeString());
+            if(gpx == null) {
+                appendLineText("Failed to get gpx for " + nExercise);
+                continue;
+            }
+            int len = gpx.length();
+            if(len > 80) {
+                len = 80;
+            }
+            appendLineText("Got Gpx:");
+            appendLineText(
+                gpx.substring(0, len) + "... [" + gpx.length() + "]");
+        }
     }
 
     /**

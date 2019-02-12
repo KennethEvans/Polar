@@ -46,7 +46,7 @@ public class TrainingSession {
     @SerializedName("physicalInformationSnapshot")
     @Expose
     private PhysicalInformationSnapshot physicalInformationSnapshot;
-    @SerializedName("exercises")
+    @SerializedName("exercise")
     @Expose
     private List<Exercise> exercises = null;
 
@@ -61,7 +61,7 @@ public class TrainingSession {
      * 
      * @param timeZoneOffset
      * @param exportVersion
-     * @param exercises
+     * @param exercise
      * @param maximumHeartRate
      * @param physicalInformationSnapshot
      * @param stopTime

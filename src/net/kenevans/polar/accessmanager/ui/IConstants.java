@@ -45,6 +45,10 @@ public interface IConstants
     public static final String P_POLAR_USER_ID = "polar_user_id";
     /*** The default value for the Polar user_id. */
     public static final String D_POLAR_USER_ID = "";
+    /*** The preference name for the exercise transaction_id. */
+    public static final String P_EXERCISE_TRANSACTION_ID = "exercise_Transaction_id";
+    /*** The default value for the exercise transaction_id. */
+    public static final int D_EXERCISE_TRANSACTION_ID = -1;
     /*** The preference name for the MergeTcxAndGpxtoGpx source Directory. */
     public static final String P_MERGE_TCX_AND_GPX_TO_GPX_SRC_DIR = "mergeTcxAndGpxtoGpxSrcDirectory";
     /*** The default value for the MergeTcxAndGpxtoGpx source Directory. */
