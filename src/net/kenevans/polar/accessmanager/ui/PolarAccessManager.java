@@ -56,12 +56,13 @@ public class PolarAccessManager extends JFrame
     private static SimpleDateFormat startTimeFormat = new SimpleDateFormat(
         "yyyy-MM-dd'T'HH:mm:ss.SSS");
 
-    public static final boolean USE_START_FILE_NAME = false;
     private static final long serialVersionUID = 1L;
-    private static final String TITLE = NAME;
 
+    private static final String TITLE = NAME;
     private static final int WIDTH = 600;
     private static final int HEIGHT = 600;
+
+    private SaveMode saveMode = SaveMode.SKIP;
 
     private JTextArea textArea;
     private JMenuBar menuBar;
@@ -663,8 +664,10 @@ public class PolarAccessManager extends JFrame
             + Http.getLastResponseCodeString());
         // Get the exerciseList
         Exercises exercises = Http.getExerciseList(false);
-        appendLineText(
-            "getExerciseList() returned " + Http.getLastResponseCodeString());
+        if(!Http.lastResponseMessage.isEmpty()) {
+            appendLineText(
+                "getExerciseList() returned " + Http.lastResponseMessage);
+        }
         switch(Http.lastResponseCode) {
         case HttpURLConnection.HTTP_OK:
             break;
@@ -672,15 +675,14 @@ public class PolarAccessManager extends JFrame
             appendLineText("There are no exercises");
             return;
         case HttpURLConnection.HTTP_NOT_FOUND:
-            appendLineText(Http.getLastResponseCodeString()
-                + " (May need a new transaction-id, wait a few minutes)");
+            appendLineText("May need a new transaction-id, wait a few minutes");
             return;
         default:
-            appendLineText(Http.getLastResponseCodeString());
+            appendLineText(Http.lastResponseMessage);
             return;
         }
         if(exercises == null) {
-            appendLineText("getExerciseList() returned null");
+            appendLineText("exercises is null");
             return;
         }
         // Loop over exercises
@@ -698,17 +700,23 @@ public class PolarAccessManager extends JFrame
         for(String exerciseString : exerciseList) {
             nExercise++;
             exercise = Http.getExerciseSummary(exerciseString, false);
-            appendLineText("Exercise " + nExercise);
-            appendLineText("  start-time=" + exercise.startTime);
-            appendLineText("  upload-time=" + exercise.uploadTime);
-            appendLineText("  sport=" + exercise.sport);
-            appendLineText(
-                "  detailed-sport-info=" + exercise.detailedSportInfo);
-            appendLineText("  duration=" + exercise.duration);
-            appendLineText("  distance=" + exercise.distance);
-            appendLineText("  device=" + exercise.device);
-            // appendLineText(" clubName=" + exercise.clubName);
-            // appendLineText(" clubId=" + exercise.clubId);
+            if(!Http.lastResponseMessage.isEmpty()) {
+                appendLineText("getExerciseSummary() returned "
+                    + Http.getLastResponseCodeString());
+            }
+            if(exercise != null) {
+                appendLineText("Exercise " + nExercise);
+                appendLineText("  start-time=" + exercise.startTime);
+                appendLineText("  upload-time=" + exercise.uploadTime);
+                appendLineText("  sport=" + exercise.sport);
+                appendLineText(
+                    "  detailed-sport-info=" + exercise.detailedSportInfo);
+                appendLineText("  duration=" + exercise.duration);
+                appendLineText("  distance=" + exercise.distance);
+                appendLineText("  device=" + exercise.device);
+                // appendLineText(" clubName=" + exercise.clubName);
+                // appendLineText(" clubId=" + exercise.clubId);
+            }
         }
     }
 
@@ -719,8 +727,10 @@ public class PolarAccessManager extends JFrame
             + Http.getLastResponseCodeString());
         // Get the exerciseList
         Exercises exercises = Http.getExerciseList(false);
-        appendLineText(
-            "getExerciseList() returned " + Http.getLastResponseCodeString());
+        if(!Http.lastResponseMessage.isEmpty()) {
+            appendLineText(
+                "getExerciseList() returned " + Http.lastResponseMessage);
+        }
         switch(Http.lastResponseCode) {
         case HttpURLConnection.HTTP_OK:
             break;
@@ -728,15 +738,14 @@ public class PolarAccessManager extends JFrame
             appendLineText("There are no exercises");
             return;
         case HttpURLConnection.HTTP_NOT_FOUND:
-            appendLineText(Http.getLastResponseCodeString()
-                + " (May need a new transaction-id, wait a few minutes)");
+            appendLineText("May need a new transaction-id, wait a few minutes");
             return;
         default:
-            appendLineText(Http.getLastResponseCodeString());
+            appendLineText(Http.lastResponseMessage);
             return;
         }
         if(exercises == null) {
-            appendLineText("getExerciseList() returned null");
+            appendLineText("exercises is null");
             return;
         }
         // Loop over exercises
@@ -750,8 +759,8 @@ public class PolarAccessManager extends JFrame
             return;
         }
         int nExercise = 0;
+        int nEmpty = 0, nWritten = 0, nAborted = 0, nSkipped = 0;
         String gpxName, tcxName;
-        File gpxFile, tcxFile;
         Exercise exercise;
         String startTime;
         String detailedSportInfo;
@@ -759,8 +768,10 @@ public class PolarAccessManager extends JFrame
             nExercise++;
             appendLineText("Exercise " + nExercise);
             exercise = Http.getExerciseSummary(exerciseString, false);
-            appendLineText("getExerciseSummary() returned "
-                + Http.getLastResponseCodeString());
+            if(!Http.lastResponseMessage.isEmpty()) {
+                appendLineText("getExerciseSummary() returned "
+                    + Http.getLastResponseCodeString());
+            }
             if(exercise == null) {
                 startTime = null;
                 detailedSportInfo = null;
@@ -771,62 +782,114 @@ public class PolarAccessManager extends JFrame
 
             // GPX
             gpxName = getFileName(startTime, detailedSportInfo, ".gpx");
-            appendLineText(gpxName);
-            String url = exerciseString + "/gpx";
-            String gpx = Http.getGpx(url, false);
-            appendLineText(
-                "getGpx() returned " + Http.getLastResponseCodeString());
-            if(gpx == null) {
-                appendLineText("Failed to get GPX for " + nExercise);
+            File gpxFile = new File(initialSaveDir, gpxName);
+            if(saveMode == SaveMode.SKIP && gpxFile.exists()) {
+                nSkipped++;
+                appendLineText("Skipping " + gpxName);
             } else {
-                int len = gpx.length();
-                if(len > 80) {
-                    len = 80;
+                appendLineText(gpxName);
+                String url = exerciseString + "/gpx";
+                String gpx = Http.getGpx(url, false);
+                if(!Http.lastResponseMessage.isEmpty()) {
+                    appendLineText(
+                        "getGpx() returned " + Http.lastResponseMessage);
                 }
-                // appendLineText(
-                // gpx.substring(0, len) + "... [" + gpx.length() + "]");
-                appendLineText("Length is " + gpx.length());
-                if(len > 0) {
-                    gpxFile = new File(initialSaveDir, gpxName);
-                    try (PrintWriter out = new PrintWriter(gpxFile)) {
-                        out.println(gpx);
-                        appendLineText("Wrote " + gpxFile.getPath());
-                    } catch(FileNotFoundException ex) {
-                        appendLineText("Error writing " + gpxFile.getPath() + LS
-                            + ex.getMessage());
+                if(gpx == null) {
+                    appendLineText("Failed to get GPX for " + nExercise);
+                } else {
+                    int len = gpx.length();
+                    if(len > 80) {
+                        len = 80;
+                    }
+                    // appendLineText(
+                    // gpx.substring(0, len) + "... [" + gpx.length() + "]");
+                    appendLineText("Length is " + gpx.length());
+                    if(len == 0) {
+                        nEmpty++;
+                    } else {
+                        boolean skip = false;
+                        if(saveMode == SaveMode.PROMPT && gpxFile.exists()) {
+                            int selection = JOptionPane.showConfirmDialog(null,
+                                "File exists:" + LS + gpxFile.getPath() + LS
+                                    + "OK to overwrite?",
+                                "File Exists", JOptionPane.OK_CANCEL_OPTION,
+                                JOptionPane.QUESTION_MESSAGE);
+                            if(selection != JOptionPane.OK_OPTION) {
+                                skip = true;
+                                nSkipped++;
+                                appendLineText("Aborted " + gpxFile.getPath());
+                            }
+                        }
+                        if(!skip) {
+                            try (PrintWriter out = new PrintWriter(gpxFile)) {
+                                nWritten++;
+                                out.println(gpx);
+                                appendLineText("Wrote " + gpxFile.getPath());
+                            } catch(FileNotFoundException ex) {
+                                appendLineText("Error writing "
+                                    + gpxFile.getPath() + LS + ex.getMessage());
+                            }
+                        }
                     }
                 }
             }
 
             // TCX
             tcxName = getFileName(startTime, detailedSportInfo, ".tcx");
-            appendLineText(tcxName);
-            url = exerciseString + "/tcx";
-            String tcx = Http.getTcx(url, false);
-            appendLineText(
-                "getTcx() returned " + Http.getLastResponseCodeString());
-            if(tcx == null) {
-                appendLineText("Failed to get TCX for " + nExercise);
+            File tcxFile = new File(initialSaveDir, tcxName);
+            if(saveMode == SaveMode.SKIP && tcxFile.exists()) {
+                nSkipped++;
+                appendLineText("Skipping " + tcxName);
             } else {
-                int len = tcx.length();
-                if(len > 80) {
-                    len = 80;
+                appendLineText(tcxName);
+                String url = exerciseString + "/tcx";
+                String tcx = Http.getTcx(url, false);
+                if(!Http.lastResponseMessage.isEmpty()) {
+                    appendLineText(
+                        "getTcx() returned " + Http.lastResponseMessage);
                 }
-                // appendLineText(
-                // tcx.substring(0, len) + "... [" + tcx.length() + "]");
-                appendLineText("Length is " + tcx.length());
-                if(len > 0) {
-                    tcxFile = new File(initialSaveDir, tcxName);
-                    try (PrintWriter out = new PrintWriter(tcxFile)) {
-                        out.println(tcx);
-                        appendLineText("Wrote " + tcxFile.getPath());
-                    } catch(FileNotFoundException ex) {
-                        appendLineText("Error writing " + tcxFile.getPath() + LS
-                            + ex.getMessage());
+                if(tcx == null) {
+                    appendLineText("Failed to get TCX for " + nExercise);
+                } else {
+                    int len = tcx.length();
+                    if(len > 80) {
+                        len = 80;
+                    }
+                    // appendLineText(
+                    // tcx.substring(0, len) + "... [" + tcx.length() + "]");
+                    appendLineText("Length is " + tcx.length());
+                    if(len == 0) {
+                        nEmpty++;
+                    } else {
+                        boolean skip = false;
+                        if(saveMode == SaveMode.PROMPT && tcxFile.exists()) {
+                            int selection = JOptionPane.showConfirmDialog(null,
+                                "File exists:" + LS + tcxFile.getPath() + LS
+                                    + "OK to overwrite?",
+                                "File Exists", JOptionPane.OK_CANCEL_OPTION,
+                                JOptionPane.QUESTION_MESSAGE);
+                            if(selection != JOptionPane.OK_OPTION) {
+                                skip = true;
+                                nAborted++;
+                                appendLineText("Aborted " + gpxFile.getPath());
+                            }
+                        }
+                        if(!skip) {
+                            try (PrintWriter out = new PrintWriter(tcxFile)) {
+                                nWritten++;
+                                out.println(tcx);
+                                appendLineText("Wrote " + tcxFile.getPath());
+                            } catch(FileNotFoundException ex) {
+                                appendLineText("Error writing "
+                                    + tcxFile.getPath() + LS + ex.getMessage());
+                            }
+                        }
                     }
                 }
             }
         }
+        appendLineText("Written: " + nWritten + " Empty: " + nEmpty
+            + " Skipped: " + nSkipped + " Aborted: " + nAborted);
     }
 
     /**

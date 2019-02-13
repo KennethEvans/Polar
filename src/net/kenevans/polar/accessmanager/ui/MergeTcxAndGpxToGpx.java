@@ -40,10 +40,6 @@ public class MergeTcxAndGpxToGpx implements IConstants
     private String initialDestDir = "C:/Users/evans/Documents/GPSLink/Polar/Converted";
     private boolean doMerge;
 
-    private static enum SaveMode {
-        PROMPT, SKIP, OVERWRITE
-    };
-
     MergeTcxAndGpxToGpx(PolarAccessManager manager, boolean doMerge) {
         this.manager = manager;
         this.doMerge = doMerge;
@@ -165,7 +161,15 @@ public class MergeTcxAndGpxToGpx implements IConstants
                 }
                 switch(saveMode) {
                 case PROMPT:
-                     break;
+                    int selection = JOptionPane.showConfirmDialog(null,
+                        "File exists:" + LS + gpxFile.getPath() + LS
+                            + "OK to overwrite?",
+                        "File Exists", JOptionPane.OK_CANCEL_OPTION,
+                        JOptionPane.QUESTION_MESSAGE);
+                    if(selection != JOptionPane.OK_OPTION) {
+                        continue;
+                    }
+                    break;
                 case SKIP:
                     continue;
                 case OVERWRITE:

@@ -38,6 +38,7 @@ public class Http implements IConstants
     public static Integer exercise_transaction_id = -1;
     // public static List<String> exerciseList = new ArrayList<>();
     public static int lastResponseCode;
+    public static String lastResponseMessage = "";
     public static boolean debug;
 
     /**
@@ -52,9 +53,6 @@ public class Http implements IConstants
             polar_user_id = prefs.get(P_POLAR_USER_ID, D_POLAR_USER_ID);
             exercise_transaction_id = prefs.getInt(P_EXERCISE_TRANSACTION_ID,
                 D_EXERCISE_TRANSACTION_ID);
-
-            // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-            // client_user_id = "User1";
         }
     }
 
@@ -70,21 +68,6 @@ public class Http implements IConstants
             prefs.put(P_POLAR_USER_ID, polar_user_id);
             prefs.putInt(P_EXERCISE_TRANSACTION_ID, exercise_transaction_id);
         }
-    }
-
-    public static String getAuthorizationURL() {
-        if(access_code == null || access_code.isEmpty()) {
-            Utils.errMsg("No access code");
-            return null;
-        }
-        byte[] decodedBytes = Base64.getDecoder().decode(access_code);
-        String decodedString = new String(decodedBytes);
-        String[] parts = decodedString.split(":");
-        if(parts == null || parts.length != 2) {
-            Utils.errMsg("Unable to parse access code");
-            return null;
-        }
-        return AUTHORIZATION_URL_PREFIX + parts[0];
     }
 
     /**
@@ -166,9 +149,11 @@ public class Http implements IConstants
     }
 
     public static String getRateLimits(boolean popup) {
+        lastResponseMessage = "";
         if(access_code == null) {
+            lastResponseMessage = "No access_code";
             if(popup) {
-                Utils.errMsg("No access_code");
+                Utils.errMsg(lastResponseMessage);
             }
             return null;
         }
@@ -181,14 +166,15 @@ public class Http implements IConstants
 
         int responseCode = lastResponseCode = req.getResponseCode();
         if(responseCode > 299) {
-            String msg = "list getRateLimits: " + getLastResponseCodeString();
+            lastResponseMessage = "list getRateLimits: "
+                + getLastResponseCodeString();
             String error = req.getError();
             if(error != null) {
-                msg += LS + error;
+                lastResponseMessage += LS + error;
             }
             if(popup) {
                 if(popup) {
-                    Utils.errMsg(msg);
+                    Utils.errMsg(lastResponseMessage);
                 }
             }
             // No return here, get the headers anyway
@@ -216,6 +202,24 @@ public class Http implements IConstants
         return info;
     }
 
+    public static String getAuthorizationURL() {
+        lastResponseMessage = "";
+        if(access_code == null || access_code.isEmpty()) {
+            lastResponseMessage = "No access code";
+            Utils.errMsg(lastResponseMessage);
+            return null;
+        }
+        byte[] decodedBytes = Base64.getDecoder().decode(access_code);
+        String decodedString = new String(decodedBytes);
+        String[] parts = decodedString.split(":");
+        if(parts == null || parts.length != 2) {
+            lastResponseMessage = "Unable to parse access code";
+            Utils.errMsg(lastResponseMessage);
+            return null;
+        }
+        return AUTHORIZATION_URL_PREFIX + parts[0];
+    }
+
     /**
      * Queries the server for the token using the code received from the
      * access_code request.
@@ -224,9 +228,11 @@ public class Http implements IConstants
      * @return An AssetToken with the data or null on failure.
      */
     public static AccessToken getToken(String code, boolean popup) {
+        lastResponseMessage = "";
         if(access_code == null) {
+            lastResponseMessage = "No access_code";
             if(popup) {
-                Utils.errMsg("No access_code");
+                Utils.errMsg(lastResponseMessage);
             }
             return null;
         }
@@ -239,21 +245,24 @@ public class Http implements IConstants
         String body = "grant_type=authorization_code&code=" + code;
         boolean res = req.writeOutput(body);
         if(!res) {
+            lastResponseMessage = "Failed to write output " + LS
+                + req.lastError;
             if(popup) {
-                Utils.errMsg("Failed to write output " + LS + req.lastError);
+                Utils.errMsg(lastResponseMessage);
             }
             return null;
         }
 
         int responseCode = lastResponseCode = req.getResponseCode();
         if(responseCode != HttpURLConnection.HTTP_OK) {
-            String msg = "getToken Failed: " + getLastResponseCodeString();
+            lastResponseMessage = "getToken Failed: "
+                + getLastResponseCodeString();
             String error = req.getError();
             if(error != null) {
-                msg += LS + error;
+                lastResponseMessage += LS + error;
             }
             if(popup) {
-                Utils.errMsg(msg);
+                Utils.errMsg(lastResponseMessage);
             }
             return null;
         }
@@ -271,10 +280,12 @@ public class Http implements IConstants
     }
 
     public static User registerUser(boolean popup) {
+        lastResponseMessage = "";
         if(token == null) {
+            lastResponseMessage = "No token";
             if(popup) {
                 if(popup) {
-                    Utils.errMsg("No token");
+                    Utils.errMsg(lastResponseMessage);
                 }
             }
             return null;
@@ -288,21 +299,24 @@ public class Http implements IConstants
         String body = "{\"member-id\": \"" + client_user_id + "\"}";
         boolean res = req.writeOutput(body);
         if(!res) {
+            lastResponseMessage = "Failed to write output " + LS
+                + req.lastError;
             if(popup) {
-                Utils.errMsg("Failed to write output " + LS + req.lastError);
+                Utils.errMsg(lastResponseMessage);
             }
             return null;
         }
 
         int responseCode = lastResponseCode = req.getResponseCode();
         if(responseCode != HttpURLConnection.HTTP_OK) {
-            String msg = "registerUser Failed: " + getLastResponseCodeString();
+            lastResponseMessage = "registerUser Failed: "
+                + getLastResponseCodeString();
             // String error = req.getError();
             // if(error != null) {
-            // msg += LS + error;
+            // lastResponseMessage += LS + error;
             // }
             if(popup) {
-                Utils.errMsg(msg);
+                Utils.errMsg(lastResponseMessage);
             }
             return null;
         }
@@ -325,9 +339,11 @@ public class Http implements IConstants
     }
 
     public static User getUserInformation(boolean popup) {
+        lastResponseMessage = "";
         if(token == null) {
+            lastResponseMessage = "No token";
             if(popup) {
-                Utils.errMsg("No token");
+                Utils.errMsg(lastResponseMessage);
             }
             return null;
         }
@@ -338,13 +354,13 @@ public class Http implements IConstants
 
         int responseCode = lastResponseCode = req.getResponseCode();
         if(responseCode != HttpURLConnection.HTTP_OK) {
-            String msg = "getUserInformation Failed: "
+            lastResponseMessage = "getUserInformation Failed: "
                 + getLastResponseCodeString();
             // if(error != null) {
-            // msg += LS + error;
+            // lastResponseMessage += LS + error;
             // }
             if(popup) {
-                Utils.errMsg(msg);
+                Utils.errMsg(lastResponseMessage);
             }
             return null;
         }
@@ -362,15 +378,18 @@ public class Http implements IConstants
     }
 
     public static boolean deleteUser(boolean popup) {
+        lastResponseMessage = "";
         if(token == null) {
+            lastResponseMessage = "No token";
             if(popup) {
-                Utils.errMsg("No token");
+                Utils.errMsg(lastResponseMessage);
             }
             return false;
         }
         if(polar_user_id == null || polar_user_id.length() == 0) {
+            lastResponseMessage = "No Polar user_id";
             if(popup) {
-                Utils.errMsg("No Polar user_id");
+                Utils.errMsg(lastResponseMessage);
             }
             return false;
         }
@@ -388,13 +407,14 @@ public class Http implements IConstants
 
         int responseCode = lastResponseCode = req.getResponseCode();
         if(responseCode != HttpURLConnection.HTTP_NO_CONTENT) {
-            String msg = "deleteUser Failed: " + getLastResponseCodeString();
+            lastResponseMessage = "deleteUser Failed: "
+                + getLastResponseCodeString();
             // String error = req.getError();
             // if(error != null) {
-            // msg += LS + error;
+            // lastResponseMessage += LS + error;
             // }
             if(popup) {
-                Utils.errMsg(msg);
+                Utils.errMsg(lastResponseMessage);
             }
             return false;
         }
@@ -402,9 +422,11 @@ public class Http implements IConstants
     }
 
     public static String listNotifications(boolean popup) {
+        lastResponseMessage = "";
         if(access_code == null) {
+            lastResponseMessage = "No access_code";
             if(popup) {
-                Utils.errMsg("No access_code");
+                Utils.errMsg(lastResponseMessage);
             }
             return null;
         }
@@ -415,14 +437,14 @@ public class Http implements IConstants
 
         int responseCode = lastResponseCode = req.getResponseCode();
         if(responseCode != HttpURLConnection.HTTP_OK) {
-            String msg = "listNotifications Failed: "
+            lastResponseMessage = "listNotifications Failed: "
                 + getLastResponseCodeString();
             String error = req.getError();
             if(error != null) {
-                msg += LS + error;
+                lastResponseMessage += LS + error;
             }
             if(popup) {
-                Utils.errMsg(msg);
+                Utils.errMsg(lastResponseMessage);
             }
             return null;
         }
@@ -447,9 +469,11 @@ public class Http implements IConstants
      * @return
      */
     public static ExercisesHash getExercisesHash(boolean popup) {
+        lastResponseMessage = "";
         if(token == null) {
+            lastResponseMessage = "No token";
             if(popup) {
-                Utils.errMsg("No token");
+                Utils.errMsg(lastResponseMessage);
             }
             return null;
         }
@@ -460,14 +484,14 @@ public class Http implements IConstants
 
         int responseCode = lastResponseCode = req.getResponseCode();
         if(responseCode != HttpURLConnection.HTTP_OK) {
-            String msg = "getExercisesHash Failed: "
+            lastResponseMessage = "getExercisesHash Failed: "
                 + getLastResponseCodeString();
             String error = req.getError();
             if(error != null) {
-                msg += LS + wordWrap(error, 80);
+                lastResponseMessage += LS + wordWrap(error, 80);
             }
             if(popup) {
-                Utils.errMsg(msg);
+                Utils.errMsg(lastResponseMessage);
             }
             return null;
         }
@@ -488,9 +512,11 @@ public class Http implements IConstants
 
     public static TransactionLocation getExerciseTranslationLocation(
         boolean popup) {
+        lastResponseMessage = "";
         if(token == null) {
+            lastResponseMessage = "No token";
             if(popup) {
-                Utils.errMsg("No token");
+                Utils.errMsg(lastResponseMessage);
             }
             return null;
         }
@@ -504,14 +530,14 @@ public class Http implements IConstants
 
         int responseCode = lastResponseCode = req.getResponseCode();
         if(responseCode != HttpURLConnection.HTTP_CREATED) {
-            String msg = "getTranslationLocation Failed: "
+            lastResponseMessage = "getTranslationLocation Failed: "
                 + getLastResponseCodeString();
             String error = req.getError();
             if(error != null) {
-                msg += LS + wordWrap(error, 80);
+                lastResponseMessage += LS + wordWrap(error, 80);
             }
             if(popup) {
-                Utils.errMsg(msg);
+                Utils.errMsg(lastResponseMessage);
             }
             return null;
         }
@@ -536,15 +562,18 @@ public class Http implements IConstants
     }
 
     public static Exercises getExerciseList(boolean popup) {
+        lastResponseMessage = "";
         if(token == null) {
+            lastResponseMessage = "No token";
             if(popup) {
-                Utils.errMsg("No token");
+                Utils.errMsg(lastResponseMessage);
             }
             return null;
         }
         if(exercise_transaction_id < 0) {
+            lastResponseMessage = "No exercise_transaction_id";
             if(popup) {
-                Utils.errMsg("No exercise_transaction_id");
+                Utils.errMsg(lastResponseMessage);
             }
             return null;
         }
@@ -558,13 +587,14 @@ public class Http implements IConstants
         req.setRequestProperty("Accept", "application/json");
         int responseCode = lastResponseCode = req.getResponseCode();
         if(responseCode != HttpURLConnection.HTTP_OK) {
-            String msg = "getExerciseList: " + getLastResponseCodeString();
+            lastResponseMessage = "getExerciseList: "
+                + getLastResponseCodeString();
             String error = req.getError();
             if(error != null) {
-                msg += LS + wordWrap(error, 80);
+                lastResponseMessage += LS + wordWrap(error, 80);
             }
             if(popup) {
-                Utils.errMsg(msg);
+                Utils.errMsg(lastResponseMessage);
             }
             return null;
         }
@@ -594,15 +624,18 @@ public class Http implements IConstants
     }
 
     public static Exercise getExerciseSummary(String url, boolean popup) {
+        lastResponseMessage = "";
         if(token == null) {
+            lastResponseMessage = "No token";
             if(popup) {
-                Utils.errMsg("No token");
+                Utils.errMsg(lastResponseMessage);
             }
             return null;
         }
         if(url == null) {
+            lastResponseMessage = "No url given";
             if(popup) {
-                Utils.errMsg("No url given");
+                Utils.errMsg(lastResponseMessage);
             }
             return null;
         }
@@ -615,13 +648,14 @@ public class Http implements IConstants
 
         int responseCode = lastResponseCode = req.getResponseCode();
         if(responseCode != HttpURLConnection.HTTP_OK) {
-            String msg = "getExerciseSummary: " + getLastResponseCodeString();
+            lastResponseMessage = "getExerciseSummary: "
+                + getLastResponseCodeString();
             String error = req.getError();
             if(error != null) {
-                msg += LS + wordWrap(error, 80);
+                lastResponseMessage += LS + wordWrap(error, 80);
             }
             if(popup) {
-                Utils.errMsg(msg);
+                Utils.errMsg(lastResponseMessage);
             }
             return null;
         }
@@ -641,15 +675,18 @@ public class Http implements IConstants
     }
 
     public static String getGpx(String url, boolean popup) {
+        lastResponseMessage = "";
         if(token == null) {
+            lastResponseMessage = "No token";
             if(popup) {
-                Utils.errMsg("No token");
+                Utils.errMsg(lastResponseMessage);
             }
             return null;
         }
         if(url == null) {
+            lastResponseMessage = "No url given";
             if(popup) {
-                Utils.errMsg("No url given");
+                Utils.errMsg(lastResponseMessage);
             }
             return null;
         }
@@ -662,13 +699,13 @@ public class Http implements IConstants
 
         int responseCode = lastResponseCode = req.getResponseCode();
         if(responseCode != HttpURLConnection.HTTP_OK) {
-            String msg = "getGpx: " + getLastResponseCodeString();
+            lastResponseMessage = "getGpx: " + getLastResponseCodeString();
             String error = req.getError();
             if(error != null) {
-                msg += LS + wordWrap(error, 80);
+                lastResponseMessage += LS + wordWrap(error, 80);
             }
             if(popup) {
-                Utils.errMsg(msg);
+                Utils.errMsg(lastResponseMessage);
             }
             return null;
         }
@@ -676,15 +713,18 @@ public class Http implements IConstants
     }
 
     public static String getTcx(String url, boolean popup) {
+        lastResponseMessage = "";
         if(token == null) {
+            lastResponseMessage = "No token";
             if(popup) {
-                Utils.errMsg("No token");
+                Utils.errMsg(lastResponseMessage);
             }
             return null;
         }
         if(url == null) {
+            lastResponseMessage = "No url given";
             if(popup) {
-                Utils.errMsg("No url given");
+                Utils.errMsg(lastResponseMessage);
             }
             return null;
         }
@@ -697,13 +737,13 @@ public class Http implements IConstants
 
         int responseCode = lastResponseCode = req.getResponseCode();
         if(responseCode != HttpURLConnection.HTTP_OK) {
-            String msg = "getTcx: " + getLastResponseCodeString();
+            lastResponseMessage = "getTcx: " + getLastResponseCodeString();
             String error = req.getError();
             if(error != null) {
-                msg += LS + wordWrap(error, 80);
+                lastResponseMessage += LS + wordWrap(error, 80);
             }
             if(popup) {
-                Utils.errMsg(msg);
+                Utils.errMsg(lastResponseMessage);
             }
             return null;
         }
