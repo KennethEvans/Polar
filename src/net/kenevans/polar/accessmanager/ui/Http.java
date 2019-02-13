@@ -2,7 +2,6 @@ package net.kenevans.polar.accessmanager.ui;
 
 import java.net.HttpURLConnection;
 import java.text.BreakIterator;
-import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
 import java.util.Map;
@@ -26,19 +25,20 @@ import net.kenevans.polar.utils.Utils;
  */
 
 /**
- * Manager
+ * Http
  * 
  * @author Kenneth Evans, Jr.
  */
-public class Manager implements IConstants
+public class Http implements IConstants
 {
     public static String access_code = "";
     public static String token = "";
     public static String client_user_id = DEFAULT_USER_ID;
     public static String polar_user_id = "";
     public static Integer exercise_transaction_id = -1;
-    public static List<String> exerciseList = new ArrayList<>();
+    // public static List<String> exerciseList = new ArrayList<>();
     public static int lastResponseCode;
+    public static boolean debug;
 
     /**
      * Gets the preferences from the preference store.
@@ -496,7 +496,9 @@ public class Manager implements IConstants
         }
         Request req = new Request(Request.Method.POST, ACCESS_LINK_URL
             + "users/" + polar_user_id + "/exercise-transactions");
-        System.out.println("*** " + req.url);
+        if(debug) {
+            System.out.println("*** " + req.url);
+        }
         req.setAuthorization(Request.AuthMode.BEARER, token);
         req.setRequestProperty("Accept", "application/json");
 
@@ -524,7 +526,7 @@ public class Manager implements IConstants
                 net.kenevans.polar.accessmanager.classes.TransactionLocation.class);
             if(obj != null) {
                 exercise_transaction_id = obj.transactionId;
-                Manager.setPreferences();
+                Http.setPreferences();
                 System.out.println("transaction_id=" + exercise_transaction_id);
                 String resourceUri = obj.resourceUri;
                 System.out.println("resourceUri=" + resourceUri);
@@ -549,7 +551,9 @@ public class Manager implements IConstants
         Request req = new Request(Request.Method.GET,
             ACCESS_LINK_URL + "users/" + polar_user_id
                 + "/exercise-transactions/" + exercise_transaction_id);
-        System.out.println("*** " + req.url);
+        if(debug) {
+            System.out.println("*** " + req.url);
+        }
         req.setAuthorization(Request.AuthMode.BEARER, token);
         req.setRequestProperty("Accept", "application/json");
         int responseCode = lastResponseCode = req.getResponseCode();
@@ -566,7 +570,7 @@ public class Manager implements IConstants
         }
 
         String json = req.getInput();
-        Manager.exerciseList.clear();
+        // Http.exerciseList.clear();
         if(json == null) {
             return null;
         } else {
@@ -580,7 +584,7 @@ public class Manager implements IConstants
                     System.out.println("No exercises");
                 } else {
                     for(String exercise : exerciseList) {
-                        Manager.exerciseList.add(exercise);
+                        // Http.exerciseList.add(exercise);
                         System.out.println(exercise);
                     }
                 }
@@ -603,7 +607,9 @@ public class Manager implements IConstants
             return null;
         }
         Request req = new Request(Request.Method.GET, url);
-        System.out.println("*** " + req.url);
+        if(debug) {
+            System.out.println("*** " + req.url);
+        }
         req.setAuthorization(Request.AuthMode.BEARER, token);
         req.setRequestProperty("Accept", "application/json");
 
@@ -648,7 +654,9 @@ public class Manager implements IConstants
             return null;
         }
         Request req = new Request(Request.Method.GET, url);
-        System.out.println("*** " + req.url);
+        if(debug) {
+            System.out.println("*** " + req.url);
+        }
         req.setAuthorization(Request.AuthMode.BEARER, token);
         req.setRequestProperty("Accept", "application/gpx+xml");
 
@@ -665,6 +673,42 @@ public class Manager implements IConstants
             return null;
         }
         return req.getInput();
+    }
+
+    public static String getTcx(String url, boolean popup) {
+        if(token == null) {
+            if(popup) {
+                Utils.errMsg("No token");
+            }
+            return null;
+        }
+        if(url == null) {
+            if(popup) {
+                Utils.errMsg("No url given");
+            }
+            return null;
+        }
+        Request req = new Request(Request.Method.GET, url);
+        if(debug) {
+            System.out.println("*** " + req.url);
+        }
+        req.setAuthorization(Request.AuthMode.BEARER, token);
+        req.setRequestProperty("Accept", "application/vnd.garmin.tcx+xml");
+
+        int responseCode = lastResponseCode = req.getResponseCode();
+        if(responseCode != HttpURLConnection.HTTP_OK) {
+            String msg = "getTcx: " + getLastResponseCodeString();
+            String error = req.getError();
+            if(error != null) {
+                msg += LS + wordWrap(error, 80);
+            }
+            if(popup) {
+                Utils.errMsg(msg);
+            }
+            return null;
+        }
+        String tcx = req.getUnzippedInput();
+        return tcx;
     }
 
 }

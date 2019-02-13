@@ -49,6 +49,12 @@ public interface IConstants
     public static final String P_EXERCISE_TRANSACTION_ID = "exercise_Transaction_id";
     /*** The default value for the exercise transaction_id. */
     public static final int D_EXERCISE_TRANSACTION_ID = -1;
+    
+    /*** The preference name for TCX/GPX Save Directory. */
+    public static final String P_TCX_GPX_SAVE_DIR = "tcxGpxSaveDirectory";
+    /*** The default value for the TCX/GPX Save Directory. */
+    public static final String D__TCX_GPX_SAVE_DIR_DIR = "";
+
     /*** The preference name for the MergeTcxAndGpxtoGpx source Directory. */
     public static final String P_MERGE_TCX_AND_GPX_TO_GPX_SRC_DIR = "mergeTcxAndGpxtoGpxSrcDirectory";
     /*** The default value for the MergeTcxAndGpxtoGpx source Directory. */
@@ -58,6 +64,6 @@ public interface IConstants
     /*** The default value for the MergeTcxAndGpxtoGpx source Directory. */
     public static final String D_MERGE_TCX_AND_GPX_TO_GPX_DEST_DIR = "";
 
-    public static final String MERGE_TCX_AND_GPX_TO_GPX_AUTHOR = "Polar Access Manager - MergeTcxAndGpxToGpx";
+    public static final String MERGE_TCX_AND_GPX_TO_GPX_AUTHOR = "Polar Access Http - MergeTcxAndGpxToGpx";
     public static final String MERGE_TCX_AND_GPX_TO_GPX_EXT = ".conv.gpx";
 }

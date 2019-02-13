@@ -5,6 +5,9 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.Reader;
+import java.io.StringWriter;
+import java.io.Writer;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -12,6 +15,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.zip.GZIPInputStream;
 
 /*
  * Created on Feb 8, 2019
@@ -70,10 +74,10 @@ public class Request
     enum AuthMode {
         NONE, BASIC, BEARER
     };
-    enum Method {
-        GET, PUT, POST,DELETE,
-    };
 
+    enum Method {
+        GET, PUT, POST, DELETE,
+    };
 
     public URL url;
     public HttpURLConnection conn;
@@ -131,7 +135,7 @@ public class Request
         }
         conn.setRequestProperty(key, value);
     }
-    
+
     public boolean writeOutput(String output) {
         if(conn == null) {
             lastError = "No connection";
@@ -168,7 +172,7 @@ public class Request
 
     public String getInput() {
         lastError = "";
-       if(conn == null) {
+        if(conn == null) {
             lastError = "No connection";
             return null;
         }
@@ -181,9 +185,8 @@ public class Request
                 return null;
             }
         } catch(IOException ex) {
-            lastError = "Error getting input stream" + LS
-                + ex.getMessage();
-           return null;
+            lastError = "Error getting input stream" + LS + ex.getMessage();
+            return null;
         }
         BufferedReader in = new BufferedReader(new InputStreamReader(is));
         String inputLine;
@@ -195,13 +198,78 @@ public class Request
             result = content.toString();
             in.close();
         } catch(IOException ex) {
-            lastError = "Error reading input stream" + LS
-                + ex.getMessage();
+            lastError = "Error reading input stream" + LS + ex.getMessage();
             if(content != null && content.toString() != null) {
                 return content.toString() + LS + lastError;
             } else {
                 return null;
             }
+        }
+        return result;
+    }
+
+    public String getUnzippedInput() {
+        lastError = "";
+        if(conn == null) {
+            lastError = "No connection";
+            return null;
+        }
+        InputStream is = null;
+        InputStream gis = null;
+        String result = null;
+        try {
+            is = conn.getInputStream();
+            if(is == null) {
+                lastError = "Cannot get input stream";
+                return null;
+            }
+            gis = new GZIPInputStream(is);
+            if(is == null) {
+                lastError = "Cannot get gzip input stream";
+                return null;
+            }
+        } catch(IOException ex) {
+            lastError = "Error getting input stream" + LS + ex.getMessage();
+            return null;
+        }
+        BufferedReader in = new BufferedReader(new InputStreamReader(gis));
+        String inputLine;
+        StringBuffer content = new StringBuffer();
+        try {
+            while((inputLine = in.readLine()) != null) {
+                content.append(inputLine);
+            }
+            result = content.toString();
+            in.close();
+        } catch(IOException ex) {
+            lastError = "Error reading input stream" + LS + ex.getMessage();
+            if(content != null && content.toString() != null) {
+                return content.toString() + LS + lastError;
+            } else {
+                return null;
+            }
+        }
+        return result;
+    }
+
+    public String getUnzippedInput1() {
+        lastError = "";
+        if(conn == null) {
+            lastError = "No connection";
+            return null;
+        }
+        String result = null;
+        try (InputStream is = conn.getInputStream();
+            InputStream gis = new GZIPInputStream(is);
+            Reader reader = new InputStreamReader(gis);
+            Writer writer = new StringWriter();) {
+            char[] buffer = new char[10240];
+            for(int length = 0; (length = reader.read(buffer)) > 0;) {
+                writer.write(buffer, 0, length);
+            }
+            result = writer.toString();
+        } catch(IOException ex) {
+            lastError = "Error reading input stream" + LS + ex.getMessage();
         }
         return result;
     }
