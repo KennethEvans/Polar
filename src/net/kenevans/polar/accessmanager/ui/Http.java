@@ -5,7 +5,6 @@ import java.text.BreakIterator;
 import java.util.Base64;
 import java.util.List;
 import java.util.Map;
-import java.util.prefs.Preferences;
 
 import javax.swing.JOptionPane;
 
@@ -31,43 +30,91 @@ import net.kenevans.polar.utils.Utils;
  */
 public class Http implements IConstants
 {
-    public static String access_code = "";
-    public static String token = "";
-    public static String client_user_id = DEFAULT_USER_ID;
-    public static String polar_user_id = "";
-    public static Integer exercise_transaction_id = -1;
+    // private String getAccessCode() = "";
+    // private String getToken() = "";
+    // private String getClientUserId() = DEFAULT_USER_ID;
+    // private String getPolarUserId() = "";
+    // private Integer getExerciseTransactionId() = -1;
     // public static List<String> exerciseList = new ArrayList<>();
-    public static int lastResponseCode;
-    public static String lastResponseMessage = "";
-    public static boolean debug;
+    public int lastResponseCode;
+    public String lastResponseMessage = "";
+    public boolean debug;
 
-    /**
-     * Gets the preferences from the preference store.
-     */
-    public static void getPreferences() {
-        Preferences prefs = Preferences.userRoot().node(P_PREFERENCE_NODE);
-        if(prefs != null) {
-            access_code = prefs.get(P_ACCESS, D_ACCESS);
-            token = prefs.get(P_TOKEN, D_TOKEN);
-            client_user_id = prefs.get(P_CLIENT_USER_ID, D_CLIENT_USER_ID);
-            polar_user_id = prefs.get(P_POLAR_USER_ID, D_POLAR_USER_ID);
-            exercise_transaction_id = prefs.getInt(P_EXERCISE_TRANSACTION_ID,
-                D_EXERCISE_TRANSACTION_ID);
-        }
+    PolarAccessManager manager;
+
+    public Http(PolarAccessManager manager) {
+        this.manager = manager;
     }
 
     /**
-     * Sets the preferences to the preference store.
+     * @return The value of getAccessCode().
      */
-    public static void setPreferences() {
-        Preferences prefs = Preferences.userRoot().node(P_PREFERENCE_NODE);
-        if(prefs != null) {
-            prefs.put(P_ACCESS, access_code);
-            prefs.put(P_TOKEN, token);
-            prefs.put(P_CLIENT_USER_ID, client_user_id);
-            prefs.put(P_POLAR_USER_ID, polar_user_id);
-            prefs.putInt(P_EXERCISE_TRANSACTION_ID, exercise_transaction_id);
-        }
+    public String getAccessCode() {
+        return manager.getSettings().getAccessCode();
+    }
+
+    /**
+     * @param getAccessCode() The new value for getAccessCode().
+     */
+    public void setAccessCode(String accessCode) {
+        manager.getSettings().setAccessCode(accessCode);
+    }
+
+    /**
+     * @return The value of getToken().
+     */
+    public String getToken() {
+        return manager.getSettings().getToken();
+    }
+
+    /**
+     * @param getToken() The new value for getToken().
+     */
+    public void setToken(String token) {
+        manager.getSettings().setToken(token);
+    }
+
+    /**
+     * @return The value of getClientUserId().
+     */
+    public String getClientUserId() {
+        return manager.getSettings().getClientUserId();
+    }
+
+    /**
+     * @param getClientUserId() The new value for getClientUserId().
+     */
+    public void setClientUserId(String clientUserId) {
+        manager.getSettings().setClientUserId(clientUserId);
+    }
+
+    /**
+     * @return The value of getPolarUserId().
+     */
+    public String getPolarUserId() {
+        return manager.getSettings().getPolarUserId();
+    }
+
+    /**
+     * @param getPolarUserId() The new value for getPolarUserId().
+     */
+    public void setPolarUserId(String polarUserId) {
+        manager.getSettings().setPolarUserId(polarUserId);
+    }
+
+    /**
+     * @return The value of getExerciseTransactionId().
+     */
+    public Integer getExerciseTransactionId() {
+        return manager.getSettings().getExerciseTransactionId();
+    }
+
+    /**
+     * @param getExerciseTransactionId() The new value for
+     *            getExerciseTransactionId().
+     */
+    public void setExerciseTransactionId(Integer exerciseTransactionId) {
+        manager.getSettings().setExerciseTransactionId(exerciseTransactionId);
     }
 
     /**
@@ -106,9 +153,9 @@ public class Http implements IConstants
             if(i > lineStart + width - 1) {
                 if(!endOfLine) {
                     int limit = i - lineStart - 1;
-                    BreakIterator breaks = BreakIterator.getLineInstance();
-                    breaks.setText(buf.substring(lineStart, i));
-                    int end = breaks.last();
+                    BreakIterator breakItr = BreakIterator.getLineInstance();
+                    breakItr.setText(buf.substring(lineStart, i));
+                    int end = breakItr.last();
 
                     // If the last character in the search string isn't a space,
                     // we can't split on it (looks bad). Search for a previous
@@ -116,7 +163,7 @@ public class Http implements IConstants
                     if(end == limit + 1) {
                         if(!Character
                             .isWhitespace(buf.charAt(lineStart + end))) {
-                            end = breaks.preceding(end - 1);
+                            end = breakItr.preceding(end - 1);
                         }
                     }
 
@@ -143,15 +190,15 @@ public class Http implements IConstants
         return buf.toString();
     }
 
-    public static String getLastResponseCodeString() {
+    public String getLastResponseCodeString() {
         return lastResponseCode + " "
             + Request.getStatusMessage(lastResponseCode);
     }
 
-    public static String getRateLimits(boolean popup) {
+    public String getRateLimits(boolean popup) {
         lastResponseMessage = "";
-        if(access_code == null) {
-            lastResponseMessage = "No access_code";
+        if(getAccessCode() == null) {
+            lastResponseMessage = "No getAccessCode()";
             if(popup) {
                 Utils.errMsg(lastResponseMessage);
             }
@@ -161,7 +208,7 @@ public class Http implements IConstants
         // Using just ACCESS_LINK_URL works but gives a 404
         Request req = new Request(Request.Method.GET,
             ACCESS_LINK_URL + "notifications");
-        req.setAuthorization(Request.AuthMode.BASIC, access_code);
+        req.setAuthorization(Request.AuthMode.BASIC, getAccessCode());
         req.setRequestProperty("Accept", "application/json");
 
         int responseCode = lastResponseCode = req.getResponseCode();
@@ -202,14 +249,14 @@ public class Http implements IConstants
         return info;
     }
 
-    public static String getAuthorizationURL() {
+    public String getAuthorizationURL() {
         lastResponseMessage = "";
-        if(access_code == null || access_code.isEmpty()) {
+        if(getAccessCode() == null || getAccessCode().isEmpty()) {
             lastResponseMessage = "No access code";
             Utils.errMsg(lastResponseMessage);
             return null;
         }
-        byte[] decodedBytes = Base64.getDecoder().decode(access_code);
+        byte[] decodedBytes = Base64.getDecoder().decode(getAccessCode());
         String decodedString = new String(decodedBytes);
         String[] parts = decodedString.split(":");
         if(parts == null || parts.length != 2) {
@@ -222,22 +269,22 @@ public class Http implements IConstants
 
     /**
      * Queries the server for the token using the code received from the
-     * access_code request.
+     * getAccessCode() request.
      * 
      * @param code Access code received from the web browser.
      * @return An AssetToken with the data or null on failure.
      */
-    public static AccessToken getToken(String code, boolean popup) {
+    public AccessToken getToken(String code, boolean popup) {
         lastResponseMessage = "";
-        if(access_code == null) {
-            lastResponseMessage = "No access_code";
+        if(getAccessCode() == null) {
+            lastResponseMessage = "No getAccessCode()";
             if(popup) {
                 Utils.errMsg(lastResponseMessage);
             }
             return null;
         }
         Request req = new Request(Request.Method.POST, ACCESS_TOKEN_URL);
-        req.setAuthorization(Request.AuthMode.BASIC, access_code);
+        req.setAuthorization(Request.AuthMode.BASIC, getAccessCode());
         req.setRequestProperty("Accept", "application/json;charset=UTF-8");
         req.setRequestProperty("Content-Type",
             "application/x-www-form-urlencoded");
@@ -279,10 +326,10 @@ public class Http implements IConstants
         }
     }
 
-    public static User registerUser(boolean popup) {
+    public User registerUser(boolean popup) {
         lastResponseMessage = "";
-        if(token == null) {
-            lastResponseMessage = "No token";
+        if(getToken() == null) {
+            lastResponseMessage = "No getToken()";
             if(popup) {
                 if(popup) {
                     Utils.errMsg(lastResponseMessage);
@@ -292,11 +339,11 @@ public class Http implements IConstants
         }
         Request req = new Request(Request.Method.POST,
             ACCESS_LINK_URL + "users");
-        req.setAuthorization(Request.AuthMode.BEARER, token);
+        req.setAuthorization(Request.AuthMode.BEARER, getToken());
         req.setRequestProperty("Accept", "application/json");
         req.setRequestProperty("Content-Type", "application/json");
 
-        String body = "{\"member-id\": \"" + client_user_id + "\"}";
+        String body = "{\"member-id\": \"" + getClientUserId() + "\"}";
         boolean res = req.writeOutput(body);
         if(!res) {
             lastResponseMessage = "Failed to write output " + LS
@@ -329,27 +376,22 @@ public class Http implements IConstants
             Gson gson = new Gson();
             User obj = gson.fromJson(json,
                 net.kenevans.polar.accessmanager.classes.User.class);
-            if(obj != null) {
-                polar_user_id = obj.polarUserId;
-                System.out.println("polar_user_id-=" + polar_user_id);
-                setPreferences();
-            }
             return obj;
         }
     }
 
-    public static User getUserInformation(boolean popup) {
+    public User getUserInformation(boolean popup) {
         lastResponseMessage = "";
-        if(token == null) {
-            lastResponseMessage = "No token";
+        if(getToken() == null) {
+            lastResponseMessage = "No getToken()";
             if(popup) {
                 Utils.errMsg(lastResponseMessage);
             }
             return null;
         }
         Request req = new Request(Request.Method.GET,
-            ACCESS_LINK_URL + "users/" + polar_user_id);
-        req.setAuthorization(Request.AuthMode.BEARER, token);
+            ACCESS_LINK_URL + "users/" + getPolarUserId());
+        req.setAuthorization(Request.AuthMode.BEARER, getToken());
         req.setRequestProperty("Accept", "application/json");
 
         int responseCode = lastResponseCode = req.getResponseCode();
@@ -377,16 +419,16 @@ public class Http implements IConstants
         }
     }
 
-    public static boolean deleteUser(boolean popup) {
+    public boolean deleteUser(boolean popup) {
         lastResponseMessage = "";
-        if(token == null) {
-            lastResponseMessage = "No token";
+        if(getToken() == null) {
+            lastResponseMessage = "No getToken()";
             if(popup) {
                 Utils.errMsg(lastResponseMessage);
             }
             return false;
         }
-        if(polar_user_id == null || polar_user_id.length() == 0) {
+        if(getPolarUserId() == null || getPolarUserId().length() == 0) {
             lastResponseMessage = "No Polar user_id";
             if(popup) {
                 Utils.errMsg(lastResponseMessage);
@@ -394,16 +436,17 @@ public class Http implements IConstants
             return false;
         }
         int result = JOptionPane.showConfirmDialog(null,
-            "Are you sure?" + LS + "This revokes the access token and will make"
-                + LS + "any existing data inaccessible forever." + LS
+            "Are you sure?" + LS
+                + "This revokes the access getToken() and will make" + LS
+                + "any existing data inaccessible forever." + LS
                 + "OK to continue?",
             " Conformation", JOptionPane.OK_CANCEL_OPTION);
         if(result != JOptionPane.OK_OPTION) {
             return false;
         }
         Request req = new Request(Request.Method.DELETE,
-            ACCESS_LINK_URL + "users/" + polar_user_id);
-        req.setAuthorization(Request.AuthMode.BEARER, token);
+            ACCESS_LINK_URL + "users/" + getPolarUserId());
+        req.setAuthorization(Request.AuthMode.BEARER, getToken());
 
         int responseCode = lastResponseCode = req.getResponseCode();
         if(responseCode != HttpURLConnection.HTTP_NO_CONTENT) {
@@ -421,10 +464,10 @@ public class Http implements IConstants
         return true;
     }
 
-    public static String listNotifications(boolean popup) {
+    public String listNotifications(boolean popup) {
         lastResponseMessage = "";
-        if(access_code == null) {
-            lastResponseMessage = "No access_code";
+        if(getAccessCode() == null) {
+            lastResponseMessage = "No getAccessCode()";
             if(popup) {
                 Utils.errMsg(lastResponseMessage);
             }
@@ -432,8 +475,11 @@ public class Http implements IConstants
         }
         Request req = new Request(Request.Method.GET,
             ACCESS_LINK_URL + "notifications");
-        req.setAuthorization(Request.AuthMode.BASIC, access_code);
+        req.setAuthorization(Request.AuthMode.BASIC, getAccessCode());
         req.setRequestProperty("Accept", "application/json");
+        if(debug) {
+            System.out.println("*** " + req.url);
+        }
 
         int responseCode = lastResponseCode = req.getResponseCode();
         if(responseCode != HttpURLConnection.HTTP_OK) {
@@ -468,10 +514,10 @@ public class Http implements IConstants
      * 
      * @return
      */
-    public static ExercisesHash getExercisesHash(boolean popup) {
+    public ExercisesHash getExercisesHash(boolean popup) {
         lastResponseMessage = "";
-        if(token == null) {
-            lastResponseMessage = "No token";
+        if(getToken() == null) {
+            lastResponseMessage = "No getToken()";
             if(popup) {
                 Utils.errMsg(lastResponseMessage);
             }
@@ -479,7 +525,7 @@ public class Http implements IConstants
         }
         Request req = new Request(Request.Method.GET,
             ACCESS_LINK_URL + "exercises");
-        req.setAuthorization(Request.AuthMode.BEARER, token);
+        req.setAuthorization(Request.AuthMode.BEARER, getToken());
         req.setRequestProperty("Accept", "application/json");
 
         int responseCode = lastResponseCode = req.getResponseCode();
@@ -510,22 +556,21 @@ public class Http implements IConstants
         }
     }
 
-    public static TransactionLocation getExerciseTranslationLocation(
-        boolean popup) {
+    public TransactionLocation getExerciseTranslationLocation(boolean popup) {
         lastResponseMessage = "";
-        if(token == null) {
-            lastResponseMessage = "No token";
+        if(getToken() == null) {
+            lastResponseMessage = "No getToken()";
             if(popup) {
                 Utils.errMsg(lastResponseMessage);
             }
             return null;
         }
         Request req = new Request(Request.Method.POST, ACCESS_LINK_URL
-            + "users/" + polar_user_id + "/exercise-transactions");
+            + "users/" + getPolarUserId() + "/exercise-transactions");
         if(debug) {
             System.out.println("*** " + req.url);
         }
-        req.setAuthorization(Request.AuthMode.BEARER, token);
+        req.setAuthorization(Request.AuthMode.BEARER, getToken());
         req.setRequestProperty("Accept", "application/json");
 
         int responseCode = lastResponseCode = req.getResponseCode();
@@ -550,40 +595,33 @@ public class Http implements IConstants
             Gson gson = new Gson();
             TransactionLocation obj = gson.fromJson(json,
                 net.kenevans.polar.accessmanager.classes.TransactionLocation.class);
-            if(obj != null) {
-                exercise_transaction_id = obj.transactionId;
-                Http.setPreferences();
-                System.out.println("transaction_id=" + exercise_transaction_id);
-                String resourceUri = obj.resourceUri;
-                System.out.println("resourceUri=" + resourceUri);
-            }
             return obj;
         }
     }
 
-    public static Exercises getExerciseList(boolean popup) {
+    public Exercises getExerciseList(boolean popup) {
         lastResponseMessage = "";
-        if(token == null) {
-            lastResponseMessage = "No token";
+        if(getToken() == null) {
+            lastResponseMessage = "No getToken()";
             if(popup) {
                 Utils.errMsg(lastResponseMessage);
             }
             return null;
         }
-        if(exercise_transaction_id < 0) {
-            lastResponseMessage = "No exercise_transaction_id";
+        if(getExerciseTransactionId() < 0) {
+            lastResponseMessage = "No getExerciseTransactionId()";
             if(popup) {
                 Utils.errMsg(lastResponseMessage);
             }
             return null;
         }
         Request req = new Request(Request.Method.GET,
-            ACCESS_LINK_URL + "users/" + polar_user_id
-                + "/exercise-transactions/" + exercise_transaction_id);
+            ACCESS_LINK_URL + "users/" + getPolarUserId()
+                + "/exercise-transactions/" + getExerciseTransactionId());
         if(debug) {
             System.out.println("*** " + req.url);
         }
-        req.setAuthorization(Request.AuthMode.BEARER, token);
+        req.setAuthorization(Request.AuthMode.BEARER, getToken());
         req.setRequestProperty("Accept", "application/json");
         int responseCode = lastResponseCode = req.getResponseCode();
         if(responseCode != HttpURLConnection.HTTP_OK) {
@@ -623,10 +661,10 @@ public class Http implements IConstants
         }
     }
 
-    public static Exercise getExerciseSummary(String url, boolean popup) {
+    public Exercise getExerciseSummary(String url, boolean popup) {
         lastResponseMessage = "";
-        if(token == null) {
-            lastResponseMessage = "No token";
+        if(getToken() == null) {
+            lastResponseMessage = "No getToken()";
             if(popup) {
                 Utils.errMsg(lastResponseMessage);
             }
@@ -643,7 +681,7 @@ public class Http implements IConstants
         if(debug) {
             System.out.println("*** " + req.url);
         }
-        req.setAuthorization(Request.AuthMode.BEARER, token);
+        req.setAuthorization(Request.AuthMode.BEARER, getToken());
         req.setRequestProperty("Accept", "application/json");
 
         int responseCode = lastResponseCode = req.getResponseCode();
@@ -674,10 +712,10 @@ public class Http implements IConstants
         }
     }
 
-    public static String getGpx(String url, boolean popup) {
+    public String getGpx(String url, boolean popup) {
         lastResponseMessage = "";
-        if(token == null) {
-            lastResponseMessage = "No token";
+        if(getToken() == null) {
+            lastResponseMessage = "No getToken()";
             if(popup) {
                 Utils.errMsg(lastResponseMessage);
             }
@@ -694,7 +732,7 @@ public class Http implements IConstants
         if(debug) {
             System.out.println("*** " + req.url);
         }
-        req.setAuthorization(Request.AuthMode.BEARER, token);
+        req.setAuthorization(Request.AuthMode.BEARER, getToken());
         req.setRequestProperty("Accept", "application/gpx+xml");
 
         int responseCode = lastResponseCode = req.getResponseCode();
@@ -712,10 +750,10 @@ public class Http implements IConstants
         return req.getInput();
     }
 
-    public static String getTcx(String url, boolean popup) {
+    public String getTcx(String url, boolean popup) {
         lastResponseMessage = "";
-        if(token == null) {
-            lastResponseMessage = "No token";
+        if(getToken() == null) {
+            lastResponseMessage = "No getToken()";
             if(popup) {
                 Utils.errMsg(lastResponseMessage);
             }
@@ -732,7 +770,7 @@ public class Http implements IConstants
         if(debug) {
             System.out.println("*** " + req.url);
         }
-        req.setAuthorization(Request.AuthMode.BEARER, token);
+        req.setAuthorization(Request.AuthMode.BEARER, getToken());
         req.setRequestProperty("Accept", "application/vnd.garmin.tcx+xml");
 
         int responseCode = lastResponseCode = req.getResponseCode();

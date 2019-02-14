@@ -11,11 +11,13 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.PrintWriter;
 import java.net.HttpURLConnection;
+import java.net.URL;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
 
+import javax.swing.ImageIcon;
 import javax.swing.JFrame;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
@@ -36,6 +38,8 @@ import net.kenevans.polar.accessmanager.classes.Exercises;
 import net.kenevans.polar.accessmanager.classes.ExercisesHash;
 import net.kenevans.polar.accessmanager.classes.TransactionLocation;
 import net.kenevans.polar.accessmanager.classes.User;
+import net.kenevans.polar.accessmanager.preferences.PreferencesDialog;
+import net.kenevans.polar.accessmanager.preferences.Settings;
 import net.kenevans.polar.utils.AboutBoxPanel;
 import net.kenevans.polar.utils.ImageUtils;
 import net.kenevans.polar.utils.JsonUtils;
@@ -45,11 +49,11 @@ public class PolarAccessManager extends JFrame
     implements IConstants, PropertyChangeListener
 {
     public static final String LS = System.getProperty("line.separator");
-    private static final String NAME = "Polar Access Http";
+    private static final String NAME = "Polar Access Manager";
     private static final String VERSION = "1.0.0";
     private static final String HELP_TITLE = NAME + " " + VERSION;
     private static final String AUTHOR = "Written by Kenneth Evans, Jr.";
-    private static final String COPYRIGHT = "Copyright (c) 2012-2019 Kenneth Evans";
+    private static final String COPYRIGHT = "Copyright (c) 2019 Kenneth Evans";
     private static final String COMPANY = "kenevans.net";
     private static SimpleDateFormat fileDateFormat = new SimpleDateFormat(
         "yyyy-MM-dd_HH-mm-ss");
@@ -62,6 +66,10 @@ public class PolarAccessManager extends JFrame
     private static final int WIDTH = 600;
     private static final int HEIGHT = 600;
 
+    private Http http;
+    private Settings settings;
+    private PreferencesDialog preferencesDialog;
+
     private SaveMode saveMode = SaveMode.SKIP;
 
     private JTextArea textArea;
@@ -73,14 +81,15 @@ public class PolarAccessManager extends JFrame
     private String initialSaveDir = "C:/Users/evans/Documents/GPSLink/Polar/Access";
 
     public PolarAccessManager() {
+        http = new Http(this);
         uiInit();
 
         System.out.println("PolarAccessManager started at: " + new Date());
 
-        Http.getPreferences();
+        loadUserPreferences();
 
         // Debug WebPage
-        // Http.setToken(null);
+        // http.setToken(null);
 
         // Debug Fiddler
         // System.setProperty("http.proxyHost", "127.0.0.1");
@@ -98,20 +107,20 @@ public class PolarAccessManager extends JFrame
             "https.proxyPort=" + System.getProperty("https.proxyPort", ""));
         appendLineText("");
 
-        // appendLineText("access_code=" + Http.access_code);
-        appendLineText("token=" + Http.token);
-        appendLineText("client_user_id=" + Http.client_user_id);
-        appendLineText("polar_user_id=" + Http.polar_user_id);
+        // appendLineText("accessCode=" + http.accessCode);
+        appendLineText("token=" + settings.getToken());
+        appendLineText("clientUserId=" + settings.getClientUserId());
+        appendLineText("polarUserId=" + settings.getPolarUserId());
         appendLineText(
-            "exercise_transaction_id=" + Http.exercise_transaction_id);
+            "exerciseTransactionId=" + settings.getExerciseTransactionId());
 
         // TEMPORARY
-        // Http.polar_user_id="9839019";
-        // Http.token="ef0f9246a9d0216e9d5a4c21c349d391";
-        // Http.setPreferences();
-        // Http.exercise_transaction_id = 173373912;
+        // http.polarUserId="9839019";
+        // http.token="ef0f9246a9d0216e9d5a4c21c349d391";
+        // http.setPreferences();
+        // http.exerciseTransactionId = 173373912;
 
-        Http.debug = true;
+        http.debug = true;
     }
 
     /**
@@ -140,6 +149,16 @@ public class PolarAccessManager extends JFrame
         menu.setText("File");
         menuBar.add(menu);
 
+        // Preferences
+        menuItem = new JMenuItem();
+        menuItem.setText("Preferences...");
+        menuItem.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent ae) {
+                setPreferences();
+            }
+        });
+        menu.add(menuItem);
+
         // File Exit
         menuItem = new JMenuItem();
         menuItem.setText("Exit");
@@ -154,47 +173,6 @@ public class PolarAccessManager extends JFrame
         menu = new JMenu();
         menu.setText("Basic");
         menuBar.add(menu);
-
-        // Set access code
-        menuItem = new JMenuItem();
-        menuItem.setText("Set Access Code");
-        menuItem.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent ae) {
-                appendLineText(LS + "Set access code");
-                String res = JOptionPane
-                    .showInputDialog("Enter new access code", Http.access_code);
-                if(res != null) {
-                    Http.access_code = res;
-                    Http.setPreferences();
-                    PolarAccessManager.this
-                        .appendLineText("access_code=" + Http.access_code);
-                } else {
-                    appendLineText("Aborted");
-                }
-            }
-        });
-        menu.add(menuItem);
-
-        menuItem = new JMenuItem();
-        menuItem.setText("Set Client User ID");
-        menuItem.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent ae) {
-                PolarAccessManager.this
-                    .appendLineText(LS + "Set client-user-id");
-                String res = JOptionPane.showInputDialog(
-                    "Enter new client-user-id", Http.client_user_id);
-                if(res != null) {
-                    Http.client_user_id = res;
-                    Http.setPreferences();
-                    appendLineText("polar_user_id=" + Http.client_user_id);
-                } else {
-                    appendLineText("Aborted");
-                }
-            }
-        });
-        menu.add(menuItem);
-
-        menu.add(new JSeparator());
 
         // Get access
         menuItem = new JMenuItem();
@@ -212,11 +190,17 @@ public class PolarAccessManager extends JFrame
         menuItem.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent ae) {
                 appendLineText(LS + "registerUser");
-                User obj = Http.registerUser(true);
+                User obj = http.registerUser(true);
                 if(obj == null) {
                     appendLineText("registerUser failed "
-                        + Http.getLastResponseCodeString());
+                        + http.getLastResponseCodeString());
                     return;
+                }
+                if(obj != null) {
+                    settings.setPolarUserId(obj.polarUserId);
+                    settings.saveToPreferences(true);
+                    System.out
+                        .println("polarUserId=" + settings.getPolarUserId());
                 }
                 appendLineText("User:");
                 Gson gson = new Gson();
@@ -233,10 +217,10 @@ public class PolarAccessManager extends JFrame
             public void actionPerformed(ActionEvent ae) {
                 PolarAccessManager.this
                     .appendLineText(LS + "getUserInformation");
-                User user = Http.getUserInformation(true);
+                User user = http.getUserInformation(false);
                 if(user == null) {
                     appendLineText("getUserInformation failed "
-                        + Http.getLastResponseCodeString());
+                        + http.getLastResponseCodeString());
                     return;
                 }
                 appendLineText("User:");
@@ -253,12 +237,12 @@ public class PolarAccessManager extends JFrame
         menuItem.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent ae) {
                 appendLineText(LS + "deleteUser");
-                boolean res = Http.deleteUser(true);
+                boolean res = http.deleteUser(false);
                 if(res) {
                     appendLineText("deleteUser succeeded");
                 } else {
                     appendLineText("deleteUser failed "
-                        + Http.getLastResponseCodeString());
+                        + http.getLastResponseCodeString());
                 }
                 return;
             }
@@ -273,10 +257,10 @@ public class PolarAccessManager extends JFrame
         menuItem.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent ae) {
                 appendLineText(LS + "getRateLimits");
-                String data = Http.getRateLimits(true);
+                String data = http.getRateLimits(false);
                 if(data == null) {
                     appendLineText("getRateLimits failed "
-                        + Http.getLastResponseCodeString());
+                        + http.getLastResponseCodeString());
                     return;
                 }
                 appendLineText("Rate Limits:");
@@ -298,10 +282,10 @@ public class PolarAccessManager extends JFrame
             public void actionPerformed(ActionEvent ae) {
                 PolarAccessManager.this
                     .appendLineText(LS + "listNotifications");
-                String json = Http.listNotifications(true);
+                String json = http.listNotifications(false);
                 if(json == null) {
                     appendLineText("listNotifications failed "
-                        + Http.getLastResponseCodeString());
+                        + http.getLastResponseCodeString());
                     return;
                 }
                 appendLineText("Available Data:");
@@ -314,16 +298,16 @@ public class PolarAccessManager extends JFrame
         });
         menu.add(menuItem);
 
-        // List exercise
+        // Get exercises hash
         menuItem = new JMenuItem();
         menuItem.setText("Get Exercises Hash");
         menuItem.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent ae) {
                 appendLineText(LS + "getExercisesHash");
-                ExercisesHash obj = Http.getExercisesHash(true);
+                ExercisesHash obj = http.getExercisesHash(false);
                 if(obj == null) {
                     appendLineText("getExercisesHash failed "
-                        + Http.getLastResponseCodeString());
+                        + http.getLastResponseCodeString());
                     return;
                 }
                 appendLineText("Exercises Hash:");
@@ -358,16 +342,24 @@ public class PolarAccessManager extends JFrame
         menuItem.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent ae) {
                 appendLineText(LS + "getExerciseTranslationLocation");
-                TransactionLocation obj = Http
-                    .getExerciseTranslationLocation(true);
+                TransactionLocation obj = http
+                    .getExerciseTranslationLocation(false);
                 if(obj == null) {
                     appendLineText("getExerciseTranslationLocation failed "
-                        + Http.getLastResponseCodeString());
+                        + http.getLastResponseCodeString());
                     return;
                 }
-                appendLineText(
-                    "New exercise_token-id=" + Http.exercise_transaction_id);
+                appendLineText("New exercise_transaction-id="
+                    + settings.getExerciseTransactionId());
                 appendLineText("Transaction Location:");
+                if(obj != null) {
+                    settings.setExerciseTransactionId(obj.transactionId);
+                    settings.saveToPreferences(true);
+                    System.out.println("transaction_id="
+                        + settings.getExerciseTransactionId());
+                    String resourceUri = obj.resourceUri;
+                    System.out.println("resourceUri=" + resourceUri);
+                }
                 Gson gson = new Gson();
                 String json = gson.toJson(obj);
                 appendLineText(JsonUtils.prettyFormat(json));
@@ -382,10 +374,10 @@ public class PolarAccessManager extends JFrame
         menuItem.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent ae) {
                 appendLineText(LS + "getExerciseList");
-                Exercises obj = Http.getExerciseList(true);
+                Exercises obj = http.getExerciseList(false);
                 if(obj == null) {
                     appendLineText("getExerciseList failed "
-                        + Http.getLastResponseCodeString());
+                        + http.getLastResponseCodeString());
                     return;
                 }
                 appendLineText("Exercise List:");
@@ -483,6 +475,53 @@ public class PolarAccessManager extends JFrame
     }
 
     /**
+     * Set viewer fields from the user preferences.
+     */
+    public void loadUserPreferences() {
+        settings = new Settings();
+        settings.loadFromPreferences();
+    }
+
+    /**
+     * Brings up a dialog to set preferences.
+     */
+    private void setPreferences() {
+        if(preferencesDialog == null) {
+            preferencesDialog = new PreferencesDialog(this, this);
+        }
+        // For modal, use this and preferencesDialog.showDialog() instead of
+        // preferencesDialog.setVisible(true)
+        // preferencesDialog.setModalityType(Dialog.ModalityType.APPLICATION_MODAL);
+        preferencesDialog.setDefaultCloseOperation(JFrame.HIDE_ON_CLOSE);
+        URL url = PolarAccessManager.class
+            .getResource("/resources/PolarAccess.png");
+        if(url != null) {
+            preferencesDialog.setIconImage(new ImageIcon(url).getImage());
+        }
+        preferencesDialog.setVisible(true);
+        // This only returns on Cancel and always returns true. All actions are
+        // done from the dialog.
+        // dialog.showDialog();
+    }
+
+    /**
+     * Copies the given settings to settings and resets the viewer.
+     * 
+     * @param settings
+     */
+    public void onPreferenceReset(Settings settings) {
+        // Copy from the given settings.
+        this.settings.copyFrom(settings);
+    }
+
+    /**
+     * @return The value of settings.
+     */
+    public Settings getSettings() {
+        return settings;
+    }
+
+    /**
      * Puts the panel in a JFrame and runs the JFrame.
      */
     public void run() {
@@ -533,7 +572,7 @@ public class PolarAccessManager extends JFrame
                 "Got code. OK to get new token?", "Confirmation",
                 JOptionPane.OK_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE);
             if(selection == JOptionPane.OK_OPTION) {
-                AccessToken at = Http.getToken(code, true);
+                AccessToken at = http.getToken(code, true);
                 if(at == null) {
                     appendLineText("Failed to get token");
                     return;
@@ -543,9 +582,9 @@ public class PolarAccessManager extends JFrame
                     appendLineText("Invalid token: " + token);
                     return;
                 }
-                Http.token = token;
-                Http.setPreferences();
-                appendLineText("New token: " + Http.token);
+                settings.setToken(token);
+                settings.saveToPreferences(true);
+                appendLineText("New token: " + settings.getToken());
                 appendLineText("  access_token=" + at.accessToken);
                 appendLineText("  token_type=" + at.tokenType);
                 Integer sec = at.expiresIn;
@@ -604,7 +643,7 @@ public class PolarAccessManager extends JFrame
      * Quits the application
      */
     private void quit() {
-        Http.setPreferences();
+        settings.saveToPreferences(true);
         System.exit(0);
     }
 
@@ -620,7 +659,7 @@ public class PolarAccessManager extends JFrame
      * @return
      */
     private String getFileName(String startTime, String activity, String ext) {
-        String userName = Http.client_user_id;
+        String userName = settings.getClientUserId();
         if(userName == null || userName.isEmpty()) {
             userName = "Polar";
         }
@@ -648,27 +687,27 @@ public class PolarAccessManager extends JFrame
 
     private void getAccess() {
         appendLineText(LS + "getAccess");
-        String accessUrl = Http.getAuthorizationURL();
+        String accessUrl = http.getAuthorizationURL();
         if(accessUrl == null) {
             appendLineText("No access code");
             return;
         }
-        webPageDialog = new WebPageDialog(this, Http.getAuthorizationURL());
+        webPageDialog = new WebPageDialog(this, http.getAuthorizationURL());
         webPageDialog.setVisible(true);
     }
 
     private void getExerciseSummaries() {
         // Get a new transaction-id if available
-        Http.getExerciseTranslationLocation(false);
+        http.getExerciseTranslationLocation(false);
         appendLineText("getExerciseTranslationLocation() returned "
-            + Http.getLastResponseCodeString());
+            + http.getLastResponseCodeString());
         // Get the exerciseList
-        Exercises exercises = Http.getExerciseList(false);
-        if(!Http.lastResponseMessage.isEmpty()) {
+        Exercises exercises = http.getExerciseList(false);
+        if(!http.lastResponseMessage.isEmpty()) {
             appendLineText(
-                "getExerciseList() returned " + Http.lastResponseMessage);
+                "getExerciseList() returned " + http.lastResponseMessage);
         }
-        switch(Http.lastResponseCode) {
+        switch(http.lastResponseCode) {
         case HttpURLConnection.HTTP_OK:
             break;
         case HttpURLConnection.HTTP_NO_CONTENT:
@@ -678,7 +717,7 @@ public class PolarAccessManager extends JFrame
             appendLineText("May need a new transaction-id, wait a few minutes");
             return;
         default:
-            appendLineText(Http.lastResponseMessage);
+            appendLineText(http.lastResponseMessage);
             return;
         }
         if(exercises == null) {
@@ -699,10 +738,10 @@ public class PolarAccessManager extends JFrame
         Exercise exercise;
         for(String exerciseString : exerciseList) {
             nExercise++;
-            exercise = Http.getExerciseSummary(exerciseString, false);
-            if(!Http.lastResponseMessage.isEmpty()) {
+            exercise = http.getExerciseSummary(exerciseString, false);
+            if(!http.lastResponseMessage.isEmpty()) {
                 appendLineText("getExerciseSummary() returned "
-                    + Http.getLastResponseCodeString());
+                    + http.getLastResponseCodeString());
             }
             if(exercise != null) {
                 appendLineText("Exercise " + nExercise);
@@ -722,16 +761,16 @@ public class PolarAccessManager extends JFrame
 
     private void getTpxGpx() {
         // Get a new transaction-id if available
-        Http.getExerciseTranslationLocation(false);
+        http.getExerciseTranslationLocation(false);
         appendLineText("getExerciseTranslationLocation() returned "
-            + Http.getLastResponseCodeString());
+            + http.getLastResponseCodeString());
         // Get the exerciseList
-        Exercises exercises = Http.getExerciseList(false);
-        if(!Http.lastResponseMessage.isEmpty()) {
+        Exercises exercises = http.getExerciseList(false);
+        if(!http.lastResponseMessage.isEmpty()) {
             appendLineText(
-                "getExerciseList() returned " + Http.lastResponseMessage);
+                "getExerciseList() returned " + http.lastResponseMessage);
         }
-        switch(Http.lastResponseCode) {
+        switch(http.lastResponseCode) {
         case HttpURLConnection.HTTP_OK:
             break;
         case HttpURLConnection.HTTP_NO_CONTENT:
@@ -741,7 +780,7 @@ public class PolarAccessManager extends JFrame
             appendLineText("May need a new transaction-id, wait a few minutes");
             return;
         default:
-            appendLineText(Http.lastResponseMessage);
+            appendLineText(http.lastResponseMessage);
             return;
         }
         if(exercises == null) {
@@ -767,10 +806,10 @@ public class PolarAccessManager extends JFrame
         for(String exerciseString : exerciseList) {
             nExercise++;
             appendLineText("Exercise " + nExercise);
-            exercise = Http.getExerciseSummary(exerciseString, false);
-            if(!Http.lastResponseMessage.isEmpty()) {
+            exercise = http.getExerciseSummary(exerciseString, false);
+            if(!http.lastResponseMessage.isEmpty()) {
                 appendLineText("getExerciseSummary() returned "
-                    + Http.getLastResponseCodeString());
+                    + http.getLastResponseCodeString());
             }
             if(exercise == null) {
                 startTime = null;
@@ -789,10 +828,10 @@ public class PolarAccessManager extends JFrame
             } else {
                 appendLineText(gpxName);
                 String url = exerciseString + "/gpx";
-                String gpx = Http.getGpx(url, false);
-                if(!Http.lastResponseMessage.isEmpty()) {
+                String gpx = http.getGpx(url, false);
+                if(!http.lastResponseMessage.isEmpty()) {
                     appendLineText(
-                        "getGpx() returned " + Http.lastResponseMessage);
+                        "getGpx() returned " + http.lastResponseMessage);
                 }
                 if(gpx == null) {
                     appendLineText("Failed to get GPX for " + nExercise);
@@ -843,10 +882,10 @@ public class PolarAccessManager extends JFrame
             } else {
                 appendLineText(tcxName);
                 String url = exerciseString + "/tcx";
-                String tcx = Http.getTcx(url, false);
-                if(!Http.lastResponseMessage.isEmpty()) {
+                String tcx = http.getTcx(url, false);
+                if(!http.lastResponseMessage.isEmpty()) {
                     appendLineText(
-                        "getTcx() returned " + Http.lastResponseMessage);
+                        "getTcx() returned " + http.lastResponseMessage);
                 }
                 if(tcx == null) {
                     appendLineText("Failed to get TCX for " + nExercise);

@@ -4,7 +4,6 @@ import java.io.File;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.prefs.Preferences;
 
 import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
@@ -36,8 +35,8 @@ public class MergeTcxAndGpxToGpx implements IConstants
     public static final String LS = System.getProperty("line.separator");
     PolarAccessManager manager;
     private List<TcxGpxFile> tcxGpxFiles = new ArrayList<>();
-    private String initialSrcDir = "C:/Users/evans/Documents/GPSLink/Polar";
-    private String initialDestDir = "C:/Users/evans/Documents/GPSLink/Polar/Converted";
+    private String initialSrcDir;
+    private String initialDestDir;
     private boolean doMerge;
 
     MergeTcxAndGpxToGpx(PolarAccessManager manager, boolean doMerge) {
@@ -355,22 +354,18 @@ public class MergeTcxAndGpxToGpx implements IConstants
      * Gets the preferences from the preference store.
      */
     public void getPreferences() {
-        Preferences prefs = Preferences.userRoot().node(P_PREFERENCE_NODE);
-        if(prefs != null) {
-            initialSrcDir = prefs.get(P_MERGE_TCX_AND_GPX_TO_GPX_SRC_DIR,
-                D_MERGE_TCX_AND_GPX_TO_GPX_SRC_DIR);
-            initialDestDir = prefs.get(P_MERGE_TCX_AND_GPX_TO_GPX_DEST_DIR,
-                D_MERGE_TCX_AND_GPX_TO_GPX_DEST_DIR);
-        }
+        initialSrcDir = manager.getSettings().getInitialTcxGpxSrcDir();
+        initialDestDir = manager.getSettings().getInitialTcxGpxDestDir();
     }
 
     /**
      * Sets the preferences to the preference store.
      */
     public void setPreferences() {
-        Preferences prefs = Preferences.userRoot().node(P_PREFERENCE_NODE);
-        prefs.put(P_MERGE_TCX_AND_GPX_TO_GPX_SRC_DIR, initialSrcDir);
-        prefs.put(P_MERGE_TCX_AND_GPX_TO_GPX_DEST_DIR, initialDestDir);
+        manager.getSettings().setInitialTcxGpxSrcDir(initialSrcDir);
+        manager.getSettings().setInitialTcxGpxDestDir(initialDestDir);
+        // These won't be put in the preference store until PolarAccessManager
+        // exits
     }
 
     public static void main(String[] args) {
