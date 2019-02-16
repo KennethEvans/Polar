@@ -196,12 +196,6 @@ public class PolarAccessManager extends JFrame
                         + http.getLastResponseCodeString());
                     return;
                 }
-                if(obj != null) {
-                    settings.setPolarUserId(obj.polarUserId);
-                    settings.saveToPreferences(true);
-                    System.out
-                        .println("polarUserId=" + settings.getPolarUserId());
-                }
                 appendLineText("User:");
                 Gson gson = new Gson();
                 String json = gson.toJson(obj);
@@ -352,14 +346,6 @@ public class PolarAccessManager extends JFrame
                 appendLineText("New exercise_transaction-id="
                     + settings.getExerciseTransactionId());
                 appendLineText("Transaction Location:");
-                if(obj != null) {
-                    settings.setExerciseTransactionId(obj.transactionId);
-                    settings.saveToPreferences(true);
-                    System.out.println("transaction_id="
-                        + settings.getExerciseTransactionId());
-                    String resourceUri = obj.resourceUri;
-                    System.out.println("resourceUri=" + resourceUri);
-                }
                 Gson gson = new Gson();
                 String json = gson.toJson(obj);
                 appendLineText(JsonUtils.prettyFormat(json));
@@ -582,8 +568,7 @@ public class PolarAccessManager extends JFrame
                     appendLineText("Invalid token: " + token);
                     return;
                 }
-                settings.setToken(token);
-                settings.saveToPreferences(true);
+                settings.saveToken(token);
                 appendLineText("New token: " + settings.getToken());
                 appendLineText("  access_token=" + at.accessToken);
                 appendLineText("  token_type=" + at.tokenType);

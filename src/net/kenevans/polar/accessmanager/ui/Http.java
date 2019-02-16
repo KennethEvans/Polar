@@ -376,6 +376,12 @@ public class Http implements IConstants
             Gson gson = new Gson();
             User obj = gson.fromJson(json,
                 net.kenevans.polar.accessmanager.classes.User.class);
+            if(obj != null) {
+                String polarUserId = obj.polarUserId;
+                // Save it now
+                manager.getSettings().savePolarUserId(polarUserId);
+                System.out.println("polar_user_id-=" + polarUserId);
+            }
             return obj;
         }
     }
@@ -595,6 +601,14 @@ public class Http implements IConstants
             Gson gson = new Gson();
             TransactionLocation obj = gson.fromJson(json,
                 net.kenevans.polar.accessmanager.classes.TransactionLocation.class);
+            if(obj != null) {
+                int exerciseTransactionId = obj.transactionId;
+                manager.getSettings()
+                    .saveExerciseTransactionId(exerciseTransactionId);
+                System.out.println("transaction_id=" + exerciseTransactionId);
+                String resourceUri = obj.resourceUri;
+                System.out.println("resourceUri=" + resourceUri);
+            }
             return obj;
         }
     }

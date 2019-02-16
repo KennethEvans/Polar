@@ -66,7 +66,8 @@ public class Settings implements IConstants
             prefs.put(P_MERGE_TCX_AND_GPX_TO_GPX_DEST_DIR,
                 initialTcxGpxDestDir);
             prefs.put(P_TCX_GPX_DOWNLOAD_DIR, tcxGpxDownloadDir);
-            prefs.put(P_TCX_GPX_DOWN_LOAD_SAVE_MODE, tcxGpxDownloadSaveMode.toString());
+            prefs.put(P_TCX_GPX_DOWN_LOAD_SAVE_MODE,
+                tcxGpxDownloadSaveMode.toString());
         } catch(Exception ex) {
             retVal = false;
             if(showErrors) {
@@ -188,6 +189,15 @@ public class Settings implements IConstants
     }
 
     /**
+     * @param token The new value for token.
+     */
+    public void saveToken(String token) {
+        this.token = token;
+        Preferences prefs = Preferences.userRoot().node(P_PREFERENCE_NODE);
+        prefs.put(P_TOKEN, token);
+    }
+
+    /**
      * @return The value of clientUserId.
      */
     public String getClientUserId() {
@@ -211,6 +221,15 @@ public class Settings implements IConstants
     /**
      * @param polarUserId The new value for polarUserId.
      */
+    public void savePolarUserId(String polarUserId) {
+        this.polarUserId = polarUserId;
+        Preferences prefs = Preferences.userRoot().node(P_PREFERENCE_NODE);
+        prefs.put(P_POLAR_USER_ID, polarUserId);
+    }
+
+    /**
+     * @param polarUserId The new value for polarUserId.
+     */
     public void setPolarUserId(String polarUserId) {
         this.polarUserId = polarUserId;
     }
@@ -227,6 +246,15 @@ public class Settings implements IConstants
      */
     public void setExerciseTransactionId(Integer exerciseTransactionId) {
         this.exerciseTransactionId = exerciseTransactionId;
+    }
+
+    /**
+     * @param exerciseTransactionId The new value for exerciseTransactionId.
+     */
+    public void saveExerciseTransactionId(Integer exerciseTransactionId) {
+        this.exerciseTransactionId = exerciseTransactionId;
+        Preferences prefs = Preferences.userRoot().node(P_PREFERENCE_NODE);
+        prefs.putInt(P_EXERCISE_TRANSACTION_ID, exerciseTransactionId);
     }
 
     /**
