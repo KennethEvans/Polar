@@ -20,6 +20,7 @@ public class Settings implements IConstants
     private String initialTcxGpxSrcDir = D_MERGE_TCX_AND_GPX_TO_GPX_SRC_DIR;
     private String initialTcxGpxDestDir = D_MERGE_TCX_AND_GPX_TO_GPX_DEST_DIR;
     private String tcxGpxDownloadDir = D_TCX_GPX_DOWNLOAD_DIR;
+    private String fileNameSubstitution = D_FILENAME_SUBSTITUTION;
     private SaveMode tcxGpxDownloadSaveMode = SaveMode
         .valueOf(D_TCX_GPX_DOWNLOAD_SAVE_MODE);
 
@@ -42,6 +43,8 @@ public class Settings implements IConstants
             D_TCX_GPX_DOWNLOAD_DIR);
         tcxGpxDownloadSaveMode = SaveMode.valueOf(prefs
             .get(P_TCX_GPX_DOWN_LOAD_SAVE_MODE, D_TCX_GPX_DOWNLOAD_SAVE_MODE));
+        fileNameSubstitution = prefs.get(P_FILENAME_SUBSTITUTION,
+            D_FILENAME_SUBSTITUTION);
     }
 
     /**
@@ -68,6 +71,7 @@ public class Settings implements IConstants
             prefs.put(P_TCX_GPX_DOWNLOAD_DIR, tcxGpxDownloadDir);
             prefs.put(P_TCX_GPX_DOWN_LOAD_SAVE_MODE,
                 tcxGpxDownloadSaveMode.toString());
+            prefs.put(P_FILENAME_SUBSTITUTION, fileNameSubstitution);
         } catch(Exception ex) {
             retVal = false;
             if(showErrors) {
@@ -158,6 +162,7 @@ public class Settings implements IConstants
         this.initialTcxGpxDestDir = settings.initialTcxGpxDestDir;
         this.tcxGpxDownloadDir = settings.tcxGpxDownloadDir;
         this.tcxGpxDownloadSaveMode = settings.tcxGpxDownloadSaveMode;
+        this.fileNameSubstitution = settings.fileNameSubstitution;
     }
 
     /**
@@ -312,6 +317,20 @@ public class Settings implements IConstants
      */
     public void setTcxGpxDownloadSaveMode(SaveMode tcxGpxDownloadSaveMode) {
         this.tcxGpxDownloadSaveMode = tcxGpxDownloadSaveMode;
+    }
+
+    /**
+     * @return The value of fileNameSubstitution.
+     */
+    public String getFileNameSubstitution() {
+        return fileNameSubstitution;
+    }
+
+    /**
+     * @param fileNameSubstitution The new value for fileNameSubstitution.
+     */
+    public void setFileNameSubstitution(String fileNameSubstitution) {
+        this.fileNameSubstitution = fileNameSubstitution;
     }
 
 }

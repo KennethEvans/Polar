@@ -16,6 +16,7 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 
 import javax.swing.ImageIcon;
 import javax.swing.JFrame;
@@ -30,6 +31,7 @@ import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
 
 import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 
 import net.kenevans.polar.accessmanager.classes.AccessToken;
 import net.kenevans.polar.accessmanager.classes.Exercise;
@@ -114,7 +116,13 @@ public class PolarAccessManager extends JFrame
         appendLineText(
             "exerciseTransactionId=" + settings.getExerciseTransactionId());
 
-        // TEMPORARY
+        // // DEBUG
+        // appendLineText("");
+        // appendLineText(
+        // "fileNameSubstitution: " + settings.getFileNameSubstitution());
+        // testFilename();
+
+        // // TEMPORARY
         // http.polarUserId="9839019";
         // http.token="ef0f9246a9d0216e9d5a4c21c349d391";
         // http.setPreferences();
@@ -667,7 +675,49 @@ public class PolarAccessManager extends JFrame
         } else {
             activity1 = activity.replaceAll(" ", "_");
         }
-        return userName + "_" + time + "_" + activity1 + ext;
+        String name = userName + "_" + time + "_" + activity1 + ext;
+
+        // Do substitutions
+        Map<String, String> fileNameSubstitutionMap;
+        Gson gson = new Gson();
+        fileNameSubstitutionMap = gson.fromJson(
+            settings.getFileNameSubstitution(),
+            new TypeToken<Map<String, String>>() {
+            }.getType());
+        if(fileNameSubstitutionMap != null
+            && !fileNameSubstitutionMap.isEmpty()) {
+            for(Map.Entry<String, String> item : fileNameSubstitutionMap
+                .entrySet()) {
+                name = name.replaceAll(item.getKey(), item.getValue());
+            }
+        }
+        return name;
+    }
+
+    private void testFilename() {
+        String startTime;
+        String activity;
+        startTime = "2019-02-06T13:10:23.000";
+        activity = "OTHER_INDOOR";
+        appendLineText(getFileName(startTime, activity, ".test"));
+        startTime = "2019-02-09T14:38:16.000";
+        activity = "WALKING";
+        appendLineText(getFileName(startTime, activity, ".test"));
+        startTime = "2019-02-11T17:28:02.000";
+        activity = "OTHER_INDOOR";
+        appendLineText(getFileName(startTime, activity, ".test"));
+        startTime = "2019-02-13T15:24:26.000";
+        activity = "OTHER_INDOOR";
+        appendLineText(getFileName(startTime, activity, ".test"));
+        startTime = "2019-02-15T14:01:46.000";
+        activity = "OTHER_INDOOR";
+        appendLineText(getFileName(startTime, activity, ".test"));
+        startTime = "2019-02-16T18:24:15.000";
+        activity = "CYCLING";
+        appendLineText(getFileName(startTime, activity, ".test"));
+        startTime = "2019-02-16T18:27:45.000";
+        activity = "OTHER_OUTDOOR";
+        appendLineText(getFileName(startTime, activity, ".test"));
     }
 
     private void getAccess() {

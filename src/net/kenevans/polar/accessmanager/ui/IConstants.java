@@ -49,6 +49,10 @@ public interface IConstants
     public static final String P_EXERCISE_TRANSACTION_ID = "exercise_Transaction_id";
     /*** The default value for the exercise transaction_id. */
     public static final int D_EXERCISE_TRANSACTION_ID = -1;
+    /*** The preference name for file name substitution (a JSON string). */
+    public static final String P_FILENAME_SUBSTITUTION = "fileNameSubstitution";
+    /*** The default value for file name substitution. */
+    public static final String D_FILENAME_SUBSTITUTION = "{}";
 
     /*** The preference name for TCX/GPX Save Directory. */
     public static final String P_TCX_GPX_DOWNLOAD_DIR = "tcxGpxDownloadDirectory";
@@ -57,7 +61,8 @@ public interface IConstants
     /*** The preference name for TCX/GPX Save Mode. */
     public static final String P_TCX_GPX_DOWN_LOAD_SAVE_MODE = "tcxGpxDownloadSaveMode";
     /*** The default value for the TCX/GPX Save Mode. */
-    public static final String D_TCX_GPX_DOWNLOAD_SAVE_MODE = SaveMode.PROMPT.toString();
+    public static final String D_TCX_GPX_DOWNLOAD_SAVE_MODE = SaveMode.PROMPT
+        .toString();
 
     /*** The preference name for the MergeTcxAndGpxtoGpx source Directory. */
     public static final String P_MERGE_TCX_AND_GPX_TO_GPX_SRC_DIR = "mergeTcxAndGpxtoGpxSrcDirectory";
