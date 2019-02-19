@@ -6,10 +6,12 @@ import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
 import java.io.File;
+import java.net.URL;
 import java.util.Map;
 
 import javax.swing.BorderFactory;
 import javax.swing.DefaultListModel;
+import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JDialog;
@@ -73,6 +75,12 @@ public class PreferencesDialog extends JDialog implements IConstants
         if(viewer == null) {
             Utils.errMsg("Viewer is null");
             return;
+        }
+        URL url = PolarAccessManager.class
+            .getResource("/resources/PolarAccessManager.32x32.png");
+
+        if(url != null) {
+            setIconImage(new ImageIcon(url).getImage());
         }
         init();
         Settings settings = new Settings();

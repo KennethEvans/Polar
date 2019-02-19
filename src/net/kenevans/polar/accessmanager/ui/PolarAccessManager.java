@@ -11,14 +11,12 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.PrintWriter;
 import java.net.HttpURLConnection;
-import java.net.URL;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
-import javax.swing.ImageIcon;
 import javax.swing.JFrame;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
@@ -487,11 +485,6 @@ public class PolarAccessManager extends JFrame
         // preferencesDialog.setVisible(true)
         // preferencesDialog.setModalityType(Dialog.ModalityType.APPLICATION_MODAL);
         preferencesDialog.setDefaultCloseOperation(JFrame.HIDE_ON_CLOSE);
-        URL url = PolarAccessManager.class
-            .getResource("/resources/PolarAccess.png");
-        if(url != null) {
-            preferencesDialog.setIconImage(new ImageIcon(url).getImage());
-        }
         preferencesDialog.setVisible(true);
         // This only returns on Cancel and always returns true. All actions are
         // done from the dialog.
@@ -536,7 +529,7 @@ public class PolarAccessManager extends JFrame
 
             // Set the icon
             ImageUtils.setIconImageFromResource(this,
-                "/resources/PolarAccess.png");
+                "/resources/PolarAccessManager.32x32.png");
 
             // Has to be done here. The menus are not part of the JPanel.
             initMenus();
@@ -694,7 +687,7 @@ public class PolarAccessManager extends JFrame
         return name;
     }
 
-    private void testFilename() {
+    public void testFilename() {
         String startTime;
         String activity;
         startTime = "2019-02-06T13:10:23.000";
