@@ -61,6 +61,7 @@ public class PreferencesDialog extends JDialog implements IConstants
     JTextField initialTcxGpxSrcDirText;
     JTextField initialTcxGpxDestDirText;
     JTextField tcxGpxDownloadDirText;
+    JTextField tcxGpxRenameDestDirText;
     JComboBox<SaveMode> tcxGpxDownloadSaveModeCombo;
 
     JList<String> fileNameSubstitutionList;
@@ -190,6 +191,51 @@ public class PreferencesDialog extends JDialog implements IConstants
         gbc.fill = GridBagConstraints.NORTH;
         gbc.weightx = 100;
         fileGroup.add(tcxGpxDownloadSaveModeCombo, gbc);
+
+        // tcxGpxRenameDestText
+        gridPanel++;
+        label = new JLabel("TCX/GPX Rename Dest:");
+        label.setToolTipText(
+            "The directory where renamed TCX and GPX files are saved");
+        gbc = (GridBagConstraints)gbcDefault.clone();
+        gbc.gridx = 0;
+        gbc.gridy = gridPanel;
+        fileGroup.add(label, gbc);
+
+        // File JPanel holds the filename and browse button
+        panel = new JPanel();
+        panel.setLayout(new GridBagLayout());
+        gbc = (GridBagConstraints)gbcDefault.clone();
+        gbc.gridx = 1;
+        gbc.gridy = gridPanel;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.weightx = 100;
+        fileGroup.add(panel, gbc);
+
+        tcxGpxRenameDestDirText = new JTextField(30);
+        tcxGpxRenameDestDirText.setToolTipText(label.getText());
+        gbc = (GridBagConstraints)gbcDefault.clone();
+        gbc.gridx = 0;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.weightx = 100;
+        panel.add(tcxGpxRenameDestDirText, gbc);
+
+        button = new JButton();
+        button.setText("Browse");
+        button.setToolTipText("Choose the directory.");
+        button.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent ev) {
+                if(tcxGpxRenameDestDirText == null) {
+                    return;
+                }
+                String initialDirName = tcxGpxRenameDestDirText.getText();
+                String dirName = browse(initialDirName);
+                tcxGpxRenameDestDirText.setText(dirName);
+            }
+        });
+        gbc = (GridBagConstraints)gbcDefault.clone();
+        gbc.gridx = 1;
+        panel.add(button);
 
         // initialTcxGpxSrcDirText
         gridPanel++;
@@ -393,6 +439,7 @@ public class PreferencesDialog extends JDialog implements IConstants
         gbc.gridx = 3;
         gbc.weightx = 100;
         panel.add(button, gbc);
+
         // Parameters /////////////////////////////////////////////////////////
         JPanel parametersGroup = new JPanel();
         parametersGroup.setBorder(BorderFactory.createCompoundBorder(
@@ -439,8 +486,7 @@ public class PreferencesDialog extends JDialog implements IConstants
         gbc.weightx = 100;
         parametersGroup.add(clientUserIdText, gbc);
 
-        // Non-Configurable Group
-        // //////////////////////////////////////////////////////
+        // Non-Configurable ///////////////////////////////////////////////////
         JPanel nonConfigurationGroup = new JPanel();
         nonConfigurationGroup.setBorder(BorderFactory.createCompoundBorder(
             BorderFactory
@@ -609,7 +655,7 @@ public class PreferencesDialog extends JDialog implements IConstants
         buttonPanel.add(button);
 
         button = new JButton();
-        button.setText("Cancel");
+        button.setText("Done");
         button.setToolTipText("Close the dialog and do nothing.");
         button.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent ev) {
@@ -730,6 +776,9 @@ public class PreferencesDialog extends JDialog implements IConstants
             tcxGpxDownloadSaveModeCombo
                 .setSelectedItem(settings.getTcxGpxDownloadSaveMode());
         }
+        if(tcxGpxRenameDestDirText != null) {
+            tcxGpxRenameDestDirText.setText(settings.getTcxGpxRenameDestDir());
+        }
         if(fileNameSubstitutionList != null) {
             Gson gson = new Gson();
             fileNameSubstitutionMap = gson.fromJson(
@@ -765,6 +814,7 @@ public class PreferencesDialog extends JDialog implements IConstants
             settings.setTcxGpxDownloadDir(tcxGpxDownloadDirText.getText());
             settings.setTcxGpxDownloadSaveMode(
                 (SaveMode)tcxGpxDownloadSaveModeCombo.getSelectedItem());
+            settings.setTcxGpxRenameDestDir(tcxGpxRenameDestDirText.getText());
             if(fileNameSubstitutionMap != null) {
                 Gson gson = new Gson();
                 String json = gson.toJson(fileNameSubstitutionMap);
@@ -835,7 +885,7 @@ public class PreferencesDialog extends JDialog implements IConstants
 
     /**
      * Shows the dialog and returns whether it was successful or not. However
-     * currently it is always successful and returns only on Cancel.
+     * currently it is always successful and returns only on Cancel/Done.
      * 
      * @return
      */

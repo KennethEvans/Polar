@@ -55,9 +55,9 @@ public class PolarAccessManager extends JFrame
     private static final String AUTHOR = "Written by Kenneth Evans, Jr.";
     private static final String COPYRIGHT = "Copyright (c) 2019 Kenneth Evans";
     private static final String COMPANY = "kenevans.net";
-    private static SimpleDateFormat fileDateFormat = new SimpleDateFormat(
+    public static SimpleDateFormat fileDateFormat = new SimpleDateFormat(
         "yyyy-MM-dd_HH-mm-ss");
-    private static SimpleDateFormat startTimeFormat = new SimpleDateFormat(
+    public static SimpleDateFormat startTimeFormat = new SimpleDateFormat(
         "yyyy-MM-dd'T'HH:mm:ss.SSS");
 
     private static final long serialVersionUID = 1L;
@@ -69,8 +69,6 @@ public class PolarAccessManager extends JFrame
     private Http http;
     private Settings settings;
     private PreferencesDialog preferencesDialog;
-
-    private SaveMode saveMode = SaveMode.SKIP;
 
     private JTextArea textArea;
     private JMenuBar menuBar;
@@ -96,6 +94,7 @@ public class PolarAccessManager extends JFrame
         // System.setProperty("https.proxyHost", "127.0.0.1");
         // System.setProperty("http.proxyPort", "8888");
         // System.setProperty("https.proxyPort", "8888");
+        appendLineText(new Date().toString());
         appendLineText(
             "java.version=" + System.getProperty("java.version", ""));
         appendLineText("java.home=" + System.getProperty("java.home", ""));
@@ -413,9 +412,9 @@ public class PolarAccessManager extends JFrame
         });
         menu.add(menuItem);
 
-        // Convert
+        // TCX/GPX
         menu = new JMenu();
-        menu.setText("Convert");
+        menu.setText("TCX/GPX");
         menuBar.add(menu);
 
         // TCX to GPX
@@ -445,6 +444,21 @@ public class PolarAccessManager extends JFrame
                 MergeTcxAndGpxToGpx merge = new MergeTcxAndGpxToGpx(
                     PolarAccessManager.this, true);
                 merge.processTcxFiles();
+            }
+        });
+        menu.add(menuItem);
+
+        // Rename TCX and GPX
+        menuItem = new JMenuItem();
+        menuItem.setText("Rename TCX and GPX...");
+        menuItem.setToolTipText("Renames TCX/GPX file pairs.");
+        menuItem.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent ae) {
+                PolarAccessManager.this
+                    .appendLineText(LS + "Rename TCX/GPX file pairs");
+                RenameTcxGpx rename = new RenameTcxGpx(PolarAccessManager.this,
+                    true);
+                rename.processTcxFiles();
             }
         });
         menu.add(menuItem);
@@ -634,12 +648,51 @@ public class PolarAccessManager extends JFrame
     }
 
     /**
-     * Generate a filename using the current client-user-name and the supplied
-     * XMLGregorianCalendar value, activity string, and extension. The activity
-     * should be space or underscore-separated words (usually a location). The
-     * extension should start with dot.
+     * Capitalizes the first letter only in the given string.
      * 
-     * @param xcal
+     * @param original
+     * @return
+     */
+    public static String capitalizeFirstLetter(String original) {
+        if(original == null || original.length() == 0) {
+            return original;
+        }
+        return original.substring(0, 1).toUpperCase()
+            + original.substring(1).toLowerCase();
+    }
+
+    /**
+     * Capitalizes the first letter only in parts of the given string separated
+     * by the given separator.
+     * 
+     * @param original
+     * @param separator
+     * @return
+     */
+    public static String capitalizeFirstLetters(String original,
+        String separator) {
+        String converted = "";
+        String[] tokens = original.split(separator);
+        boolean first = true;
+        for(String token : tokens) {
+            token = capitalizeFirstLetter(token);
+            if(first) {
+                first = false;
+                converted += token;
+            } else {
+                converted += "_" + token;
+            }
+        }
+        return converted;
+    }
+
+    /**
+     * Generate a filename using the current client-user-name and the supplied
+     * startTime, activity string, and extension. The activity should be space
+     * or underscore-separated words (usually a location). The extension should
+     * start with dot.
+     * 
+     * @param startIime
      * @param activity
      * @param ext
      * @return
@@ -662,13 +715,14 @@ public class PolarAccessManager extends JFrame
                 time = "0000-00-00_000000";
             }
         }
-        String activity1;
+        String activityStr;
         if(activity == null || activity.isEmpty()) {
-            activity1 = "Unknown";
+            activityStr = "Unknown";
         } else {
-            activity1 = activity.replaceAll(" ", "_");
+            activityStr = activity.replaceAll(" ", "_");
         }
-        String name = userName + "_" + time + "_" + activity1 + ext;
+        activityStr = capitalizeFirstLetters(activityStr, "_");
+        String name = userName + "_" + time + "_" + activityStr + ext;
 
         // Do substitutions
         Map<String, String> fileNameSubstitutionMap;
@@ -826,7 +880,7 @@ public class PolarAccessManager extends JFrame
             return;
         }
         int nExercise = 0;
-        int nEmpty = 0, nWritten = 0, nAborted = 0, nSkipped = 0;
+        int nEmpty = 0, nFailed = 0, nWritten = 0, nAborted = 0, nSkipped = 0;
         String gpxName, tcxName;
         Exercise exercise;
         String startTime;
@@ -850,7 +904,8 @@ public class PolarAccessManager extends JFrame
             // GPX
             gpxName = getFileName(startTime, detailedSportInfo, ".gpx");
             File gpxFile = new File(initialSaveDir, gpxName);
-            if(saveMode == SaveMode.SKIP && gpxFile.exists()) {
+            if(settings.getTcxGpxDownloadSaveMode() == SaveMode.SKIP
+                && gpxFile.exists()) {
                 nSkipped++;
                 appendLineText("Skipping " + gpxName);
             } else {
@@ -862,6 +917,7 @@ public class PolarAccessManager extends JFrame
                         "getGpx() returned " + http.lastResponseMessage);
                 }
                 if(gpx == null) {
+                    nFailed++;
                     appendLineText("Failed to get GPX for " + nExercise);
                 } else {
                     int len = gpx.length();
@@ -875,7 +931,9 @@ public class PolarAccessManager extends JFrame
                         nEmpty++;
                     } else {
                         boolean skip = false;
-                        if(saveMode == SaveMode.PROMPT && gpxFile.exists()) {
+                        if(settings
+                            .getTcxGpxDownloadSaveMode() == SaveMode.PROMPT
+                            && gpxFile.exists()) {
                             int selection = JOptionPane.showConfirmDialog(null,
                                 "File exists:" + LS + gpxFile.getPath() + LS
                                     + "OK to overwrite?",
@@ -904,7 +962,8 @@ public class PolarAccessManager extends JFrame
             // TCX
             tcxName = getFileName(startTime, detailedSportInfo, ".tcx");
             File tcxFile = new File(initialSaveDir, tcxName);
-            if(saveMode == SaveMode.SKIP && tcxFile.exists()) {
+            if(settings.getTcxGpxDownloadSaveMode() == SaveMode.SKIP
+                && tcxFile.exists()) {
                 nSkipped++;
                 appendLineText("Skipping " + tcxName);
             } else {
@@ -916,6 +975,7 @@ public class PolarAccessManager extends JFrame
                         "getTcx() returned " + http.lastResponseMessage);
                 }
                 if(tcx == null) {
+                    nFailed++;
                     appendLineText("Failed to get TCX for " + nExercise);
                 } else {
                     int len = tcx.length();
@@ -929,7 +989,9 @@ public class PolarAccessManager extends JFrame
                         nEmpty++;
                     } else {
                         boolean skip = false;
-                        if(saveMode == SaveMode.PROMPT && tcxFile.exists()) {
+                        if(settings
+                            .getTcxGpxDownloadSaveMode() == SaveMode.PROMPT
+                            && tcxFile.exists()) {
                             int selection = JOptionPane.showConfirmDialog(null,
                                 "File exists:" + LS + tcxFile.getPath() + LS
                                     + "OK to overwrite?",
@@ -955,8 +1017,9 @@ public class PolarAccessManager extends JFrame
                 }
             }
         }
-        appendLineText("Written: " + nWritten + " Empty: " + nEmpty
-            + " Skipped: " + nSkipped + " Aborted: " + nAborted);
+        appendLineText(
+            "Written: " + nWritten + " Failed: " + nFailed + " Empty: " + nEmpty
+                + " Skipped: " + nSkipped + " Aborted: " + nAborted);
     }
 
     /**

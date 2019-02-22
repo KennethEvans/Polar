@@ -523,7 +523,7 @@ public class Http implements IConstants
     public ExercisesHash getExercisesHash(boolean popup) {
         lastResponseMessage = "";
         if(getToken() == null) {
-            lastResponseMessage = "No getToken()";
+            lastResponseMessage = "No token";
             if(popup) {
                 Utils.errMsg(lastResponseMessage);
             }
@@ -565,7 +565,7 @@ public class Http implements IConstants
     public TransactionLocation getExerciseTranslationLocation(boolean popup) {
         lastResponseMessage = "";
         if(getToken() == null) {
-            lastResponseMessage = "No getToken()";
+            lastResponseMessage = "No token";
             if(popup) {
                 Utils.errMsg(lastResponseMessage);
             }
@@ -616,7 +616,7 @@ public class Http implements IConstants
     public Exercises getExerciseList(boolean popup) {
         lastResponseMessage = "";
         if(getToken() == null) {
-            lastResponseMessage = "No getToken()";
+            lastResponseMessage = "No token";
             if(popup) {
                 Utils.errMsg(lastResponseMessage);
             }
@@ -678,7 +678,7 @@ public class Http implements IConstants
     public Exercise getExerciseSummary(String url, boolean popup) {
         lastResponseMessage = "";
         if(getToken() == null) {
-            lastResponseMessage = "No getToken()";
+            lastResponseMessage = "No token";
             if(popup) {
                 Utils.errMsg(lastResponseMessage);
             }
@@ -729,7 +729,7 @@ public class Http implements IConstants
     public String getGpx(String url, boolean popup) {
         lastResponseMessage = "";
         if(getToken() == null) {
-            lastResponseMessage = "No getToken()";
+            lastResponseMessage = "No token";
             if(popup) {
                 Utils.errMsg(lastResponseMessage);
             }
@@ -767,7 +767,7 @@ public class Http implements IConstants
     public String getTcx(String url, boolean popup) {
         lastResponseMessage = "";
         if(getToken() == null) {
-            lastResponseMessage = "No getToken()";
+            lastResponseMessage = "No token";
             if(popup) {
                 Utils.errMsg(lastResponseMessage);
             }

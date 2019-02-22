@@ -1,12 +1,16 @@
 package net.kenevans.polar.accessmanager.ui;
 
+import java.awt.Dimension;
+import java.awt.Toolkit;
 import java.io.File;
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 import javax.swing.JFileChooser;
-import javax.swing.JOptionPane;
+import javax.swing.JFrame;
 import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.xml.bind.JAXBException;
 import javax.xml.datatype.XMLGregorianCalendar;
@@ -17,12 +21,19 @@ import org.apache.commons.math3.analysis.interpolation.UnivariateInterpolator;
 import org.apache.commons.math3.exception.MathIllegalArgumentException;
 
 import net.kenevans.gpxtrackpointextensionv2.GpxType;
+import net.kenevans.gpxtrackpointextensionv2.MetadataType;
 import net.kenevans.gpxtrackpointextensionv2.TrkType;
 import net.kenevans.gpxtrackpointextensionv2.TrksegType;
 import net.kenevans.gpxtrackpointextensionv2.WptType;
 import net.kenevans.gpxtrackpointextensionv2.parser.GPXClone;
 import net.kenevans.gpxtrackpointextensionv2.parser.GPXParser;
+import net.kenevans.trainingcenterdatabasev2.ActivityListT;
+import net.kenevans.trainingcenterdatabasev2.ActivityT;
+import net.kenevans.trainingcenterdatabasev2.PlanT;
+import net.kenevans.trainingcenterdatabasev2.SportT;
 import net.kenevans.trainingcenterdatabasev2.TrainingCenterDatabaseT;
+import net.kenevans.trainingcenterdatabasev2.TrainingT;
+import net.kenevans.trainingcenterdatabasev2.TrainingTypeT;
 import net.kenevans.trainingcenterdatabasev2.parser.TCXParser;
 
 /*
@@ -30,18 +41,34 @@ import net.kenevans.trainingcenterdatabasev2.parser.TCXParser;
  * By Kenneth Evans, Jr.
  */
 
-public class MergeTcxAndGpxToGpx implements IConstants
+/**
+ * RenameTcxGpx
+ * @author Kenneth Evans, Jr.
+ */
+/**
+ * RenameTcxGpx
+ * @author Kenneth Evans, Jr.
+ */
+/**
+ * RenameTcxGpx
+ * @author Kenneth Evans, Jr.
+ */
+/**
+ * RenameTcxGpx
+ * 
+ * @author Kenneth Evans, Jr.
+ */
+public class RenameTcxGpx implements IConstants
 {
     public static final String LS = System.getProperty("line.separator");
     PolarAccessManager manager;
     private List<TcxGpxFile> tcxGpxFiles = new ArrayList<>();
     private String initialSrcDir;
-    private String initialDestDir;
-    private boolean doMerge;
+    private boolean doGpx;
 
-    MergeTcxAndGpxToGpx(PolarAccessManager manager, boolean doMerge) {
+    RenameTcxGpx(PolarAccessManager manager, boolean doMerge) {
         this.manager = manager;
-        this.doMerge = doMerge;
+        this.doGpx = doMerge;
         getPreferences();
     }
 
@@ -52,16 +79,19 @@ public class MergeTcxAndGpxToGpx implements IConstants
             return;
         }
 
+        // Sort them by date, latest first
+        Arrays.sort(tcxFiles, Collections.reverseOrder());
+
         // Get the matching file pairs
         String tcxPath, gpxPath;
-        File tcxFile, gpxFile;
+        File tcxFile = null, gpxFile = null;
         for(File file : tcxFiles) {
             // Find the matching GPX file
             tcxPath = file.getPath();
             gpxFile = null;
-            // Use the same name but with .gpx
-            if(tcxPath.endsWith(".tcx")) {
-                gpxPath = tcxPath.replaceAll("tcx$", "gpx");
+            if(tcxPath.contains(".")) {
+                gpxPath = tcxPath.substring(0, tcxPath.lastIndexOf('.'))
+                    + ".gpx";
                 gpxFile = new File(gpxPath);
             }
             if(gpxFile != null && !gpxFile.exists()) {
@@ -71,7 +101,8 @@ public class MergeTcxAndGpxToGpx implements IConstants
         }
 
         // Process them
-        TrainingCenterDatabaseT tcx;
+        TrainingCenterDatabaseT tcx = null;
+        GpxType gpx = null;
         for(TcxGpxFile tcxgpx : tcxGpxFiles) {
             tcxFile = tcxgpx.tcxFile;
             try {
@@ -81,107 +112,26 @@ public class MergeTcxAndGpxToGpx implements IConstants
                     + LS + ex.getMessage());
                 continue;
             }
-            GpxType gpxNew = TCXParser.convertTCXtoGpx(tcx);
-            tcxgpx.gpx = gpxNew;
-            // Merge with existing GPX file (that should have ele)
-            if(doMerge && tcxgpx.gpxFile != null) {
-                GpxType gpxMerged = mergeEle(tcxgpx.gpxFile, gpxNew);
-                if(gpxMerged == null) {
-                    manager.appendLineText(
-                        "  Failed to merge " + tcxgpx.gpxFile.getPath());
-                    continue;
-                } else {
-                    manager
-                        .appendLineText("Merged " + tcxgpx.gpxFile.getPath());
-                    tcxgpx.gpx = gpxMerged;
-                }
-            }
-        }
-
-        // Prompt for output directory
-        File outDir = getGpxOutputDir();
-        if(outDir == null) {
-            manager.appendLineText("Cancelled");
-            return;
-        }
-
-        // Determine how many to save
-        int nSave = 0;
-        for(TcxGpxFile tcxgpx : tcxGpxFiles) {
-            if(tcxgpx.gpx != null) {
-                nSave++;
-            }
-        }
-
-        // Get ok to save
-        SaveMode saveMode = SaveMode.PROMPT;
-        if(nSave > 0) {
-            // Prompt that files will be overwritten
-            String[] buttons = {"Prompt", "Skip", "Overwrite", "Cancel"};
-            int selection = JOptionPane.showOptionDialog(null,
-                "Writing " + nSave + " files."
-                    + "Select how to handle existing files",
-                "Confirmation", JOptionPane.DEFAULT_OPTION, 0, null, buttons,
-                buttons[0]);
-            switch(selection) {
-            case 0:
-                saveMode = SaveMode.PROMPT;
-                break;
-            case 1:
-                saveMode = SaveMode.SKIP;
-                break;
-            case 2:
-                saveMode = SaveMode.OVERWRITE;
-                break;
-            default:
-                manager.appendLineText("Cancelled");
-                return;
-            }
-        } else {
-            manager.appendLineText("No converted files to save");
-            return;
-        }
-
-        // Write the files
-        for(TcxGpxFile tcxgpx : tcxGpxFiles) {
-            if(tcxgpx.gpx != null) {
-                String tcxName = tcxgpx.tcxFile.getName();
-                tcxPath = tcxgpx.tcxFile.getPath();
-                String gpxName = null;
-                gpxFile = null;
-                if(tcxName.endsWith(".tcx")) {
-                    gpxName = tcxName.replaceAll("\\.tcx$",
-                        MERGE_TCX_AND_GPX_TO_GPX_EXT);
-                    gpxFile = new File(initialDestDir, gpxName);
-                }
-                if(gpxFile == null) {
-                    manager.appendLineText("Error renaming " + tcxPath);
-                    continue;
-                }
-                switch(saveMode) {
-                case PROMPT:
-                    int selection = JOptionPane.showConfirmDialog(null,
-                        "File exists:" + LS + gpxFile.getPath() + LS
-                            + "OK to overwrite?",
-                        "File Exists", JOptionPane.OK_CANCEL_OPTION,
-                        JOptionPane.QUESTION_MESSAGE);
-                    if(selection != JOptionPane.OK_OPTION) {
-                        continue;
-                    }
-                    break;
-                case SKIP:
-                    continue;
-                case OVERWRITE:
-                    break;
-                }
+            manager.appendLineText(tcxFile.getPath());
+            // Also do GPX if there is one
+            gpxFile = null;
+            gpx = null;
+            if(doGpx && tcxgpx.gpxFile != null) {
+                gpxFile = tcxgpx.gpxFile;
+                manager.appendLineText(gpxFile.getPath());
                 try {
-                    GPXParser.save(MERGE_TCX_AND_GPX_TO_GPX_AUTHOR, tcxgpx.gpx,
-                        gpxFile);
-                    manager.appendLineText("Saved " + gpxFile.getPath());
+                    gpx = GPXParser.parse(gpxFile);
                 } catch(JAXBException ex) {
-                    manager.appendLineText("Error saving " + gpxFile.getPath()
-                        + LS + ex.getMessage());
+                    manager.appendLineText("Failed to parse "
+                        + gpxFile.getPath() + LS + ex.getMessage());
+                    continue;
                 }
+            }
+            FileRenameDialog.Result result = doRename(tcxFile, tcx, gpxFile,
+                gpx);
+            if(result != FileRenameDialog.Result.OK) {
+                // Utils.errMsg("Aborting remainder of TCX/GPX file renaming");
+                break;
             }
         }
     }
@@ -329,43 +279,135 @@ public class MergeTcxAndGpxToGpx implements IConstants
         return null;
     }
 
-    private File getGpxOutputDir() {
-        JFileChooser chooser = new JFileChooser();
-        chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
-        chooser.setDialogTitle("Select GPX Output Directory");
-        if(initialDestDir != null) {
-            File file = new File(initialDestDir);
-            if(file != null && file.exists()) {
-                chooser.setCurrentDirectory(file);
-            }
-        }
-        int result = chooser.showOpenDialog(manager);
-        if(result == JFileChooser.APPROVE_OPTION) {
-            File file = chooser.getSelectedFile();
-            // Save the selected path for next time
-            initialDestDir = chooser.getSelectedFile().getPath();
-            setPreferences();
-            return file;
-        }
-        return null;
-    }
-
     /**
      * Gets the preferences from the preference store.
      */
     public void getPreferences() {
-        initialSrcDir = manager.getSettings().getInitialTcxGpxSrcDir();
-        initialDestDir = manager.getSettings().getInitialTcxGpxDestDir();
+        // Use the download directory. Mabe make another preference?
+        initialSrcDir = manager.getSettings().getTcxGpxDownloadDir();
     }
 
     /**
      * Sets the preferences to the preference store.
      */
     public void setPreferences() {
-        manager.getSettings().setInitialTcxGpxSrcDir(initialSrcDir);
-        manager.getSettings().setInitialTcxGpxDestDir(initialDestDir);
+        // Don't reset any directories
         // These won't be put in the preference store until PolarAccessManager
         // exits
+    }
+
+    /**
+     * Get various metadata for the given TrainingCenterDatabaseT.
+     * 
+     * @param tcx
+     * @return
+     */
+    public static String getMetaData(TrainingCenterDatabaseT tcx) {
+        StringBuilder sb = new StringBuilder();
+        // Metadata
+        String desc = TCXParser.getMetadataDescriptionFromTcx(tcx);
+        sb.append("metadataDescription: " + desc);
+
+        ActivityListT activities;
+        List<ActivityT> activityList;
+        TrainingT training;
+        TrainingTypeT trainingType;
+        SportT sport;
+        PlanT plan;
+        String planName, notes, sportName;
+        XMLGregorianCalendar id;
+        // Loop over activities (Correspond to a track)
+        activities = tcx.getActivities();
+        // Loop over activities
+        activityList = activities.getActivity();
+        int nActivities = 0;
+        for(ActivityT activity : activityList) {
+            nActivities++;
+            sportName = "";
+            desc = "";
+            id = activity.getId();
+            sport = activity.getSport();
+            if(sport != null) {
+                sportName = sport.name();
+            }
+            sb.append(LS + "Activity " + nActivities + ": " + id + " Sport="
+                + sportName);
+            planName = "";
+            notes = "";
+            training = activity.getTraining();
+            if(training != null) {
+                plan = training.getPlan();
+                if(plan != null) {
+                    trainingType = plan.getType();
+                    desc += "Training Type: " + trainingType;
+                    planName = plan.getName();
+                    if(planName != null && !planName.isEmpty()) {
+                        if(!desc.isEmpty()) {
+                            desc += " ";
+                        }
+                        desc += "PlanName: " + planName;
+                    }
+                }
+            }
+            notes = activity.getNotes();
+            if(notes != null && !notes.isEmpty()) {
+                if(!desc.isEmpty()) {
+                    desc += " ";
+                }
+                desc += "Notes: " + notes;
+            }
+            sb.append(LS + desc);
+
+        }
+        return sb.toString();
+    }
+
+    /**
+     * Get various metadata for the given GpxType.
+     * 
+     * @param gpx
+     * @return
+     */
+    public static String getMetaData(GpxType gpx) {
+        StringBuilder sb = new StringBuilder();
+        String desc = null;
+        MetadataType metadata;
+        List<TrkType> trkList;
+        // Metadata
+        metadata = gpx.getMetadata();
+        if(metadata != null) {
+            desc = metadata.getDesc();
+        }
+        sb.append("metadataDescription: " + desc);
+
+        trkList = gpx.getTrk();
+        int nTrks = 0;
+        if(trkList != null) {
+            for(TrkType trk : trkList) {
+                nTrks++;
+                sb.append(LS + "Track " + nTrks);
+                desc = trk.getDesc();
+                sb.append(LS + "description: " + desc);
+            }
+        }
+        return sb.toString();
+    }
+
+    private FileRenameDialog.Result doRename(File tcxFile,
+        TrainingCenterDatabaseT tcx, File gpxFile, GpxType gpx) {
+        FileRenameDialog dlg = new FileRenameDialog(manager, manager, tcxFile,
+            tcx, gpxFile, gpx);
+        dlg.setModal(true);
+        dlg.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+        // Center on screen
+        final Dimension screenSize = Toolkit.getDefaultToolkit()
+            .getScreenSize();
+        int x = (screenSize.width / 2) - (dlg.getSize().width / 2);
+        int y = (screenSize.height / 2) - (dlg.getSize().height / 2);
+        dlg.setLocation(x, y);
+
+        FileRenameDialog.Result result = dlg.showDialog();
+        return result;
     }
 
     public static void main(String[] args) {
@@ -377,7 +419,7 @@ public class MergeTcxAndGpxToGpx implements IConstants
     {
         private File tcxFile;
         private File gpxFile;
-        private GpxType gpx;
+        // private GpxType gpx;
 
         TcxGpxFile(File tcxFile, File gpxFile) {
             this.tcxFile = tcxFile;

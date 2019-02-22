@@ -8,16 +8,13 @@ package net.kenevans.polar.accessmanager.ui;
 public interface IConstants
 {
     public static final String LS = System.getProperty("line.separator");
+    public static enum SaveMode {
+        PROMPT, SKIP, OVERWRITE
+    };
 
     public static final String AUTHORIZATION_URL_PREFIX = "https://flow.polar.com/oauth2/authorization?response_type=code&client_id=";
     public static final String ACCESS_TOKEN_URL = "https://polarremote.com/v2/oauth2/token";
     public static final String ACCESS_LINK_URL = "https://www.polaraccesslink.com/v3/";
-
-    /**
-     * The file where the encrypted access code is kept (so it won't be
-     * committed). Needs to be changed for another client.
-     */
-    public static String ACCESS_CODE_FILE = "C:/Users/evans/Documents/Personal/Keys/polaraccess.txt";
 
     /** Our custom id for the user, used in register user */
     public static final String DEFAULT_USER_ID = "User1";
@@ -58,6 +55,12 @@ public interface IConstants
     public static final String P_TCX_GPX_DOWNLOAD_DIR = "tcxGpxDownloadDirectory";
     /*** The default value for the TCX/GPX Save Directory. */
     public static final String D_TCX_GPX_DOWNLOAD_DIR = "";
+    
+    /*** The preference name for TCX/GPX Rename Destination Directory. */
+    public static final String P_TCX_GPX_RENAME_DEST_DIR = "tcxGpxRenameDestDirectory";
+    /*** The default value for the TCX/GPX Rename Destination Directory. */
+    public static final String D_TCX_GPX_RENAME_DEST_DIR = "";
+
     /*** The preference name for TCX/GPX Save Mode. */
     public static final String P_TCX_GPX_DOWN_LOAD_SAVE_MODE = "tcxGpxDownloadSaveMode";
     /*** The default value for the TCX/GPX Save Mode. */
@@ -75,9 +78,5 @@ public interface IConstants
 
     public static final String MERGE_TCX_AND_GPX_TO_GPX_AUTHOR = "Polar Access Http - MergeTcxAndGpxToGpx";
     public static final String MERGE_TCX_AND_GPX_TO_GPX_EXT = ".conv.gpx";
-
-    public static enum SaveMode {
-        PROMPT, SKIP, OVERWRITE
-    };
 
 }
