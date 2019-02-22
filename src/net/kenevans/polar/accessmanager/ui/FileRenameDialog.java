@@ -1,5 +1,6 @@
 package net.kenevans.polar.accessmanager.ui;
 
+import java.awt.Color;
 import java.awt.Component;
 import java.awt.Container;
 import java.awt.GridBagConstraints;
@@ -358,7 +359,8 @@ public class FileRenameDialog extends JDialog implements IConstants
 
         tcxStatusText = new JTextField(DEFAULT_TEXT_LENGTH);
         tcxStatusText.setToolTipText(label.getToolTipText());
-        if(tcxNewNameText.getText().contains(DEFAULT_PLAN)
+        tcxStatusText.setForeground(Color.RED);
+       if(tcxNewNameText.getText().contains(DEFAULT_PLAN)
             || tcxNewNameText.getText().contains(DEFAULT_NOTES)) {
             tcxStatusText.setText("Missing Plan and/or Notes");
         }
@@ -553,6 +555,7 @@ public class FileRenameDialog extends JDialog implements IConstants
 
         gpxStatusText = new JTextField(DEFAULT_TEXT_LENGTH);
         gpxStatusText.setToolTipText(label.getToolTipText());
+        gpxStatusText.setForeground(Color.RED);
         if(gpxNewNameText.getText().contains(DEFAULT_PLAN)
             || gpxNewNameText.getText().contains(DEFAULT_NOTES)) {
             gpxStatusText.setText("Missing Plan and/or Notes");
