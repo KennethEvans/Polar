@@ -107,7 +107,7 @@ public class PolarAccessManager extends JFrame
         appendLineText("");
 
         // appendLineText("accessCode=" + http.accessCode);
-        appendLineText("token=" + settings.getToken());
+        // appendLineText("token=" + settings.getToken());
         appendLineText("clientUserId=" + settings.getClientUserId());
         appendLineText("polarUserId=" + settings.getPolarUserId());
         appendLineText(
@@ -241,6 +241,24 @@ public class PolarAccessManager extends JFrame
                     appendLineText("deleteUser succeeded");
                 } else {
                     appendLineText("deleteUser failed "
+                        + http.getLastResponseCodeString());
+                }
+                return;
+            }
+        });
+        menu.add(menuItem);
+
+        // Commit transaction
+        menuItem = new JMenuItem();
+        menuItem.setText("Commit transaction");
+        menuItem.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent ae) {
+                appendLineText(LS + "commitTransaction");
+                boolean res = http.commitTransaction(false);
+                if(res) {
+                    appendLineText("commitTransaction succeeded");
+                } else {
+                    appendLineText("commitTransaction failed "
                         + http.getLastResponseCodeString());
                 }
                 return;
@@ -741,6 +759,9 @@ public class PolarAccessManager extends JFrame
         return name;
     }
 
+    /**
+     * Method used for debugging naming algorithms.
+     */
     public void testFilename() {
         String startTime;
         String activity;

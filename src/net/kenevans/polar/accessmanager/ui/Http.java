@@ -446,7 +446,7 @@ public class Http implements IConstants
                 + "This revokes the access getToken() and will make" + LS
                 + "any existing data inaccessible forever." + LS
                 + "OK to continue?",
-            " Conformation", JOptionPane.OK_CANCEL_OPTION);
+            " Confirmation", JOptionPane.OK_CANCEL_OPTION);
         if(result != JOptionPane.OK_OPTION) {
             return false;
         }
@@ -611,6 +611,54 @@ public class Http implements IConstants
             }
             return obj;
         }
+    }
+
+    public boolean commitTransaction(boolean popup) {
+        lastResponseMessage = "";
+        if(getToken() == null) {
+            lastResponseMessage = "No token";
+            if(popup) {
+                Utils.errMsg(lastResponseMessage);
+            }
+            return false;
+        }
+        if(getExerciseTransactionId() < 0) {
+            lastResponseMessage = "No getExerciseTransactionId()";
+            if(popup) {
+                Utils.errMsg(lastResponseMessage);
+            }
+            return false;
+        }
+        int result = JOptionPane.showConfirmDialog(null,
+            "Are you sure?" + LS
+                + "This will cause any existing data on Polar Access" + LS
+                + "to be removed forever." + LS + "OK to continue?",
+            " Confirmation", JOptionPane.OK_CANCEL_OPTION);
+        if(result != JOptionPane.OK_OPTION) {
+            return false;
+        }
+        Request req = new Request(Request.Method.PUT,
+            ACCESS_LINK_URL + "users/" + getPolarUserId()
+                + "/exercise-transactions/" + getExerciseTransactionId());
+        if(debug) {
+            System.out.println("*** " + req.url);
+        }
+        req.setAuthorization(Request.AuthMode.BEARER, getToken());
+
+        int responseCode = lastResponseCode = req.getResponseCode();
+        if(responseCode != HttpURLConnection.HTTP_OK) {
+            lastResponseMessage = "commitTransaction Failed: "
+                + getLastResponseCodeString();
+            String error = req.getError();
+            if(error != null) {
+                lastResponseMessage += LS + wordWrap(error, 80);
+            }
+            if(popup) {
+                Utils.errMsg(lastResponseMessage);
+            }
+            return false;
+        }
+        return true;
     }
 
     public Exercises getExerciseList(boolean popup) {
