@@ -69,7 +69,7 @@ public class FileRenameDialog extends JDialog implements IConstants
     private static final String DEFAULT_NOTES = "nnnn";
 
     public static enum Result {
-        OK, FAIL, ABORT_REMAINING
+        OK, FAIL, ABORT, ABORT_REMAINING
     };
 
     private static final int DEFAULT_TEXT_LENGTH = 60;
@@ -157,7 +157,7 @@ public class FileRenameDialog extends JDialog implements IConstants
         init();
 
         // Disable the GPX group if there is no GPX
-        if(gpxFile == null | gpx == null) {
+        if(gpxFile == null || gpx == null) {
             setPanelEnabled(gpxGroup, false);
         }
 
@@ -360,7 +360,7 @@ public class FileRenameDialog extends JDialog implements IConstants
         tcxStatusText = new JTextField(DEFAULT_TEXT_LENGTH);
         tcxStatusText.setToolTipText(label.getToolTipText());
         tcxStatusText.setForeground(Color.RED);
-       if(tcxNewNameText.getText().contains(DEFAULT_PLAN)
+        if(tcxNewNameText.getText().contains(DEFAULT_PLAN)
             || tcxNewNameText.getText().contains(DEFAULT_NOTES)) {
             tcxStatusText.setText("Missing Plan and/or Notes");
         }
@@ -375,8 +375,9 @@ public class FileRenameDialog extends JDialog implements IConstants
         button.setToolTipText("Perform the renaming.");
         button.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent ev) {
-                tcxSaved = rename(tcxOldNameText, tcxNewNameText, tcxStatusText,
-                    tcxFile);
+                Result result = rename(tcxOldNameText, tcxNewNameText,
+                    tcxStatusText, tcxFile);
+                tcxSaved = result == Result.OK;
             }
         });
         gbc = (GridBagConstraints)gbcDefault.clone();
@@ -571,8 +572,9 @@ public class FileRenameDialog extends JDialog implements IConstants
         button.setToolTipText("Perform the renaming.");
         button.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent ev) {
-                gpxSaved = rename(gpxOldNameText, gpxNewNameText, gpxStatusText,
-                    gpxFile);
+                Result result = rename(gpxOldNameText, gpxNewNameText,
+                    gpxStatusText, gpxFile);
+                gpxSaved = result == Result.OK;
             }
         });
         gbc = (GridBagConstraints)gbcDefault.clone();
@@ -637,7 +639,7 @@ public class FileRenameDialog extends JDialog implements IConstants
         button.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent ev) {
                 String msg = null;
-                if(gpxFile == null | gpx == null) {
+                if(gpxFile == null || gpx == null) {
                     if(!tcxSaved) {
                         msg = "TCX not saved." + LS + "OK to continue?";
                     }
@@ -865,8 +867,8 @@ public class FileRenameDialog extends JDialog implements IConstants
     }
 
     /**
-     * Renaming method. Renaming method in one to keep it the same for TCX and
-     * GPX.
+     * Renaming method. Renaming method in one place to keep it the same for TCX
+     * and GPX.
      * 
      * @param oldNameText JTextField for the old name.
      * @param newNameText JTextField for the new name.
@@ -874,25 +876,25 @@ public class FileRenameDialog extends JDialog implements IConstants
      * @param srcFile File corresponding to the oldNameText.
      * @return
      */
-    private boolean rename(JTextField oldNameText, JTextField newNameText,
+    private Result rename(JTextField oldNameText, JTextField newNameText,
         JTextField statusText, File srcFile) {
         File oldFile = new File(oldNameText.getText());
         if(oldFile == null) {
             statusText.setText("Error accessing old file");
             Utils.errMsg("Error accessing " + oldNameText.getText());
-            return false;
+            return Result.FAIL;
         }
         File newFile = new File(newNameText.getText());
         if(newFile == null) {
             statusText.setText("Error accessing new file");
             Utils.errMsg("Error accessing " + newNameText.getText());
-            return false;
+            return Result.FAIL;
         }
         if(newFile.getPath().toLowerCase()
             .equals(oldFile.getPath().toLowerCase())) {
             statusText.setText("Name has not changed");
             Utils.errMsg("Name has not changed");
-            return false;
+            return Result.FAIL;
         }
         if(newFile.exists()) {
             int selection = JOptionPane.showConfirmDialog(null,
@@ -901,7 +903,7 @@ public class FileRenameDialog extends JDialog implements IConstants
                 "File Exists", JOptionPane.OK_CANCEL_OPTION,
                 JOptionPane.QUESTION_MESSAGE);
             if(selection != JOptionPane.OK_OPTION) {
-                return false;
+                return Result.ABORT;
             }
         }
         try {
@@ -920,17 +922,16 @@ public class FileRenameDialog extends JDialog implements IConstants
             statusText.setText("Successful");
             srcFile = newFile;
             oldNameText.setText(srcFile.getPath());
-            return true;
+            return Result.OK;
         } catch(IOException ex) {
             statusText.setText("Error renaming file");
             Utils.excMsg("Error renaming file", ex);
-            return false;
+            return Result.FAIL;
         }
     }
 
     /**
-     * Shows the dialog and returns whether it was successful or not. However
-     * currently it is always successful and returns only on Cancel/Done.
+     * Shows the dialog and returns whether it was successful or not.
      * 
      * @return
      */
@@ -938,6 +939,50 @@ public class FileRenameDialog extends JDialog implements IConstants
         // Get a blank dialog if CTOR failed and you don't do this.
         if(result == Result.OK) {
             setVisible(true);
+        }
+        dispose();
+        return result;
+    }
+
+    public Result renameSilently() {
+        // Get a blank dialog if CTOR failed and you don't do this.
+        if(result == Result.FAIL) {
+            dispose();
+            return result;
+        }
+        String statusText = tcxStatusText.getText();
+        if(statusText != null && !statusText.isEmpty()) {
+            int selection = JOptionPane.showConfirmDialog(null,
+                tcxNewNameText + ":" + LS + statusText + LS + "Ok to continue?",
+                "Possible Problem", JOptionPane.OK_CANCEL_OPTION,
+                JOptionPane.QUESTION_MESSAGE);
+            if(selection != JOptionPane.OK_OPTION) {
+                result = Result.ABORT;
+                dispose();
+                return result;
+            }
+        }
+        result = rename(tcxOldNameText, tcxNewNameText, tcxStatusText, tcxFile);
+        if(result == Result.FAIL || result == Result.ABORT) {
+            dispose();
+            return result;
+        }
+        if(gpxFile != null && gpx != null) {
+            statusText = gpxStatusText.getText();
+            if(statusText != null && !statusText.isEmpty()) {
+                int selection = JOptionPane.showConfirmDialog(null,
+                    gpxNewNameText + ":" + LS + statusText + LS
+                        + "Ok to continue?",
+                    "Possible Problem", JOptionPane.OK_CANCEL_OPTION,
+                    JOptionPane.QUESTION_MESSAGE);
+                if(selection != JOptionPane.OK_OPTION) {
+                    result = Result.ABORT;
+                    dispose();
+                    return result;
+                }
+            }
+            result = rename(gpxOldNameText, gpxNewNameText, gpxStatusText,
+                gpxFile);
         }
         dispose();
         return result;

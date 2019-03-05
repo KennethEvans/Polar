@@ -1,6 +1,8 @@
 package net.kenevans.polar.accessmanager.ui;
 
 import java.awt.BorderLayout;
+import java.awt.Dimension;
+import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.WindowAdapter;
@@ -27,10 +29,13 @@ import javax.swing.JSeparator;
 import javax.swing.JTextArea;
 import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
+import javax.xml.bind.JAXBException;
 
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 
+import net.kenevans.gpxtrackpointextensionv2.GpxType;
+import net.kenevans.gpxtrackpointextensionv2.parser.GPXParser;
 import net.kenevans.polar.accessmanager.classes.AccessToken;
 import net.kenevans.polar.accessmanager.classes.Exercise;
 import net.kenevans.polar.accessmanager.classes.ExerciseHash;
@@ -40,10 +45,13 @@ import net.kenevans.polar.accessmanager.classes.TransactionLocation;
 import net.kenevans.polar.accessmanager.classes.User;
 import net.kenevans.polar.accessmanager.preferences.PreferencesDialog;
 import net.kenevans.polar.accessmanager.preferences.Settings;
+import net.kenevans.polar.accessmanager.ui.FileRenameDialog.Result;
 import net.kenevans.polar.utils.AboutBoxPanel;
 import net.kenevans.polar.utils.ImageUtils;
 import net.kenevans.polar.utils.JsonUtils;
 import net.kenevans.polar.utils.Utils;
+import net.kenevans.trainingcenterdatabasev2.TrainingCenterDatabaseT;
+import net.kenevans.trainingcenterdatabasev2.parser.TCXParser;
 
 public class PolarAccessManager extends JFrame
     implements IConstants, PropertyChangeListener
@@ -788,6 +796,71 @@ public class PolarAccessManager extends JFrame
         appendLineText(getFileName(startTime, activity, ".test"));
     }
 
+    private Result renameTcxGpx(File tcxFile, File gpxFile) {
+        RenameMode renameMode = settings.getTcxGpxDownloadRenameMode();
+        if(renameMode == RenameMode.NO) {
+            return Result.FAIL;
+        }
+        if(tcxFile == null) {
+            appendLineText("renameTcxGpx: tcxFile is null");
+            return Result.FAIL;
+        }
+        if(!tcxFile.exists()) {
+            appendLineText("renameTcxGpx: tcxFile does not exist");
+            return Result.FAIL;
+        }
+        // Get tcx
+        TrainingCenterDatabaseT tcx = null;
+        try {
+            tcx = TCXParser.parse(tcxFile);
+        } catch(JAXBException ex) {
+            appendLineText(
+                "Failed to parse " + tcxFile.getPath() + LS + ex.getMessage());
+            return Result.FAIL;
+        }
+        // Get gpx if gpxFile is not null
+        GpxType gpx = null;
+        if(gpxFile != null) {
+            if(gpxFile == null) {
+                appendLineText("renameTcxGpx: gpxFile is null");
+                return Result.FAIL;
+            }
+            if(!gpxFile.exists()) {
+                appendLineText("renameTcxGpx: gpxFile does not exist");
+                return Result.FAIL;
+            }
+            try {
+                gpx = GPXParser.parse(gpxFile);
+            } catch(JAXBException ex) {
+                appendLineText("Failed to parse " + gpxFile.getPath() + LS
+                    + ex.getMessage());
+                return Result.FAIL;
+            }
+        }
+        if(renameMode == RenameMode.PROMPT) {
+            FileRenameDialog dlg = new FileRenameDialog(this, this, tcxFile,
+                tcx, gpxFile, gpx);
+            dlg.setModal(true);
+            dlg.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+            // Center on screen
+            final Dimension screenSize = Toolkit.getDefaultToolkit()
+                .getScreenSize();
+            int x = (screenSize.width / 2) - (dlg.getSize().width / 2);
+            int y = (screenSize.height / 2) - (dlg.getSize().height / 2);
+            dlg.setLocation(x, y);
+
+            FileRenameDialog.Result result = dlg.showDialog();
+            return result;
+        }
+        if(renameMode == RenameMode.AUTO) {
+            FileRenameDialog dlg = new FileRenameDialog(this, this, tcxFile,
+                tcx, gpxFile, gpx);
+            FileRenameDialog.Result result = dlg.renameSilently();
+            return result;
+        }
+        return Result.FAIL;
+    }
+
     private void getAccess() {
         appendLineText(LS + "getAccess");
         String accessUrl = http.getAuthorizationURL();
@@ -902,10 +975,13 @@ public class PolarAccessManager extends JFrame
         }
         int nExercise = 0;
         int nEmpty = 0, nFailed = 0, nWritten = 0, nAborted = 0, nSkipped = 0;
+        int nRenameSuccessful = 0, nRenameAborted = 0, nRenameFailed = 0;
+        Result res;
         String gpxName, tcxName;
         Exercise exercise;
         String startTime;
         String detailedSportInfo;
+        File tcxRenameFile, gpxRenameFile;
         for(String exerciseString : exerciseList) {
             nExercise++;
             appendLineText("Exercise " + nExercise);
@@ -922,6 +998,67 @@ public class PolarAccessManager extends JFrame
                 detailedSportInfo = exercise.detailedSportInfo;
             }
 
+            // TCX
+            tcxRenameFile = gpxRenameFile = null;
+            tcxName = getFileName(startTime, detailedSportInfo, ".tcx");
+            File tcxFile = new File(initialSaveDir, tcxName);
+            if(settings.getTcxGpxDownloadSaveMode() == SaveMode.SKIP
+                && tcxFile.exists()) {
+                nSkipped++;
+                appendLineText("Skipping " + tcxName);
+            } else {
+                appendLineText(tcxName);
+                String url = exerciseString + "/tcx";
+                String tcxResponse = http.getTcx(url, false);
+                if(!http.lastResponseMessage.isEmpty()) {
+                    appendLineText(
+                        "getTcx() returned " + http.lastResponseMessage);
+                }
+                if(tcxResponse == null) {
+                    nFailed++;
+                    appendLineText("Failed to get TCX for " + nExercise);
+                } else {
+                    int len = tcxResponse.length();
+                    if(len > 80) {
+                        len = 80;
+                    }
+                    // appendLineText(
+                    // tcx.substring(0, len) + "... [" + tcx.length() + "]");
+                    appendLineText("Length is " + tcxResponse.length());
+                    if(len == 0) {
+                        nEmpty++;
+                    } else {
+                        boolean skip = false;
+                        if(settings
+                            .getTcxGpxDownloadSaveMode() == SaveMode.PROMPT
+                            && tcxFile.exists()) {
+                            int selection = JOptionPane.showConfirmDialog(null,
+                                "File exists:" + LS + tcxFile.getPath() + LS
+                                    + "OK to overwrite?",
+                                "File Exists", JOptionPane.OK_CANCEL_OPTION,
+                                JOptionPane.QUESTION_MESSAGE);
+                            if(selection != JOptionPane.OK_OPTION) {
+                                skip = true;
+                                nAborted++;
+                                appendLineText("Aborted " + tcxFile.getPath());
+                            }
+                        }
+                        if(!skip) {
+                            try (PrintWriter out = new PrintWriter(tcxFile)) {
+                                nWritten++;
+                                out.println(tcxResponse);
+                                appendLineText("Wrote " + tcxFile.getPath());
+                                // Save for possible rename
+                                tcxRenameFile = tcxFile;
+                            } catch(FileNotFoundException ex) {
+                                appendLineText("Error writing "
+                                    + tcxFile.getPath() + LS + ex.getMessage());
+                            }
+                        }
+                    }
+                }
+            }
+
             // GPX
             gpxName = getFileName(startTime, detailedSportInfo, ".gpx");
             File gpxFile = new File(initialSaveDir, gpxName);
@@ -932,22 +1069,22 @@ public class PolarAccessManager extends JFrame
             } else {
                 appendLineText(gpxName);
                 String url = exerciseString + "/gpx";
-                String gpx = http.getGpx(url, false);
+                String gpxResponse = http.getGpx(url, false);
                 if(!http.lastResponseMessage.isEmpty()) {
                     appendLineText(
                         "getGpx() returned " + http.lastResponseMessage);
                 }
-                if(gpx == null) {
+                if(gpxResponse == null) {
                     nFailed++;
                     appendLineText("Failed to get GPX for " + nExercise);
                 } else {
-                    int len = gpx.length();
+                    int len = gpxResponse.length();
                     if(len > 80) {
                         len = 80;
                     }
                     // appendLineText(
                     // gpx.substring(0, len) + "... [" + gpx.length() + "]");
-                    appendLineText("Length is " + gpx.length());
+                    appendLineText("Length is " + gpxResponse.length());
                     if(len == 0) {
                         nEmpty++;
                     } else {
@@ -969,8 +1106,10 @@ public class PolarAccessManager extends JFrame
                         if(!skip) {
                             try (PrintWriter out = new PrintWriter(gpxFile)) {
                                 nWritten++;
-                                out.println(gpx);
+                                out.println(gpxResponse);
                                 appendLineText("Wrote " + gpxFile.getPath());
+                                // Save for possible rename
+                                gpxRenameFile = tcxFile;
                             } catch(FileNotFoundException ex) {
                                 appendLineText("Error writing "
                                     + gpxFile.getPath() + LS + ex.getMessage());
@@ -979,68 +1118,26 @@ public class PolarAccessManager extends JFrame
                     }
                 }
             }
-
-            // TCX
-            tcxName = getFileName(startTime, detailedSportInfo, ".tcx");
-            File tcxFile = new File(initialSaveDir, tcxName);
-            if(settings.getTcxGpxDownloadSaveMode() == SaveMode.SKIP
-                && tcxFile.exists()) {
-                nSkipped++;
-                appendLineText("Skipping " + tcxName);
-            } else {
-                appendLineText(tcxName);
-                String url = exerciseString + "/tcx";
-                String tcx = http.getTcx(url, false);
-                if(!http.lastResponseMessage.isEmpty()) {
-                    appendLineText(
-                        "getTcx() returned " + http.lastResponseMessage);
-                }
-                if(tcx == null) {
-                    nFailed++;
-                    appendLineText("Failed to get TCX for " + nExercise);
+            // Do rename
+            if(settings.getTcxGpxDownloadRenameMode() != RenameMode.NO
+                && tcxRenameFile != null) {
+                res = renameTcxGpx(tcxRenameFile, gpxRenameFile);
+                if(res == Result.OK) {
+                    nRenameSuccessful++;
+                } else if(res == Result.ABORT
+                    || res == Result.ABORT_REMAINING) {
+                    nRenameAborted++;
                 } else {
-                    int len = tcx.length();
-                    if(len > 80) {
-                        len = 80;
-                    }
-                    // appendLineText(
-                    // tcx.substring(0, len) + "... [" + tcx.length() + "]");
-                    appendLineText("Length is " + tcx.length());
-                    if(len == 0) {
-                        nEmpty++;
-                    } else {
-                        boolean skip = false;
-                        if(settings
-                            .getTcxGpxDownloadSaveMode() == SaveMode.PROMPT
-                            && tcxFile.exists()) {
-                            int selection = JOptionPane.showConfirmDialog(null,
-                                "File exists:" + LS + tcxFile.getPath() + LS
-                                    + "OK to overwrite?",
-                                "File Exists", JOptionPane.OK_CANCEL_OPTION,
-                                JOptionPane.QUESTION_MESSAGE);
-                            if(selection != JOptionPane.OK_OPTION) {
-                                skip = true;
-                                nAborted++;
-                                appendLineText("Aborted " + gpxFile.getPath());
-                            }
-                        }
-                        if(!skip) {
-                            try (PrintWriter out = new PrintWriter(tcxFile)) {
-                                nWritten++;
-                                out.println(tcx);
-                                appendLineText("Wrote " + tcxFile.getPath());
-                            } catch(FileNotFoundException ex) {
-                                appendLineText("Error writing "
-                                    + tcxFile.getPath() + LS + ex.getMessage());
-                            }
-                        }
-                    }
+                    nRenameFailed++;
                 }
             }
         }
         appendLineText(
             "Written: " + nWritten + " Failed: " + nFailed + " Empty: " + nEmpty
                 + " Skipped: " + nSkipped + " Aborted: " + nAborted);
+        appendLineText("Rename: Successful: " + nRenameSuccessful + " Aborted: "
+            + nRenameAborted + " Failed: " + nRenameFailed
+            + " (Refers to TCX/GPX pairs)");
     }
 
     /**

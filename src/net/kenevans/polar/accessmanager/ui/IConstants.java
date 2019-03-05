@@ -8,8 +8,13 @@ package net.kenevans.polar.accessmanager.ui;
 public interface IConstants
 {
     public static final String LS = System.getProperty("line.separator");
+
     public static enum SaveMode {
         PROMPT, SKIP, OVERWRITE
+    };
+
+    public static enum RenameMode {
+        NO, PROMPT, AUTO
     };
 
     public static final String AUTHORIZATION_URL_PREFIX = "https://flow.polar.com/oauth2/authorization?response_type=code&client_id=";
@@ -55,7 +60,7 @@ public interface IConstants
     public static final String P_TCX_GPX_DOWNLOAD_DIR = "tcxGpxDownloadDirectory";
     /*** The default value for the TCX/GPX Save Directory. */
     public static final String D_TCX_GPX_DOWNLOAD_DIR = "";
-    
+
     /*** The preference name for TCX/GPX Rename Destination Directory. */
     public static final String P_TCX_GPX_RENAME_DEST_DIR = "tcxGpxRenameDestDirectory";
     /*** The default value for the TCX/GPX Rename Destination Directory. */
@@ -65,6 +70,12 @@ public interface IConstants
     public static final String P_TCX_GPX_DOWN_LOAD_SAVE_MODE = "tcxGpxDownloadSaveMode";
     /*** The default value for the TCX/GPX Save Mode. */
     public static final String D_TCX_GPX_DOWNLOAD_SAVE_MODE = SaveMode.PROMPT
+        .toString();
+
+    /*** The preference name for TCX/GPX Rename Mode. */
+    public static final String P_TCX_GPX_DOWN_LOAD_RENAME_MODE = "tcxGpxDownloadRenameMode";
+    /*** The default value for the TCX/GPX Rename Mode. */
+    public static final String D_TCX_GPX_DOWNLOAD_RENAME_MODE = RenameMode.NO
         .toString();
 
     /*** The preference name for the MergeTcxAndGpxtoGpx source Directory. */

@@ -63,6 +63,7 @@ public class PreferencesDialog extends JDialog implements IConstants
     JTextField tcxGpxDownloadDirText;
     JTextField tcxGpxRenameDestDirText;
     JComboBox<SaveMode> tcxGpxDownloadSaveModeCombo;
+    JComboBox<RenameMode> tcxGpxDownloadRenameModeCombo;
 
     JList<String> fileNameSubstitutionList;
     DefaultListModel<String> fileNameSubstitutionModel;
@@ -191,6 +192,25 @@ public class PreferencesDialog extends JDialog implements IConstants
         gbc.fill = GridBagConstraints.NORTH;
         gbc.weightx = 100;
         fileGroup.add(tcxGpxDownloadSaveModeCombo, gbc);
+
+        // Download rename mode
+        gridPanel++;
+        label = new JLabel("    Download Rename Mode:");
+        label.setToolTipText(
+            "The mode for renaming files downloaded from Polar Access.");
+        gbc = (GridBagConstraints)gbcDefault.clone();
+        gbc.gridx = 0;
+        gbc.gridy = gridPanel;
+        fileGroup.add(label, gbc);
+
+        tcxGpxDownloadRenameModeCombo = new JComboBox<RenameMode>(
+            RenameMode.values());
+        gbc = (GridBagConstraints)gbcDefault.clone();
+        gbc.gridx = 1;
+        gbc.gridy = gridPanel;
+        gbc.fill = GridBagConstraints.NORTH;
+        gbc.weightx = 100;
+        fileGroup.add(tcxGpxDownloadRenameModeCombo, gbc);
 
         // tcxGpxRenameDestText
         gridPanel++;
@@ -776,6 +796,10 @@ public class PreferencesDialog extends JDialog implements IConstants
             tcxGpxDownloadSaveModeCombo
                 .setSelectedItem(settings.getTcxGpxDownloadSaveMode());
         }
+        if(tcxGpxDownloadRenameModeCombo != null) {
+            tcxGpxDownloadRenameModeCombo
+                .setSelectedItem(settings.getTcxGpxDownloadRenameMode());
+        }
         if(tcxGpxRenameDestDirText != null) {
             tcxGpxRenameDestDirText.setText(settings.getTcxGpxRenameDestDir());
         }
@@ -814,6 +838,8 @@ public class PreferencesDialog extends JDialog implements IConstants
             settings.setTcxGpxDownloadDir(tcxGpxDownloadDirText.getText());
             settings.setTcxGpxDownloadSaveMode(
                 (SaveMode)tcxGpxDownloadSaveModeCombo.getSelectedItem());
+            settings.setTcxGpxDownloadRenameMode(
+                (RenameMode)tcxGpxDownloadRenameModeCombo.getSelectedItem());
             settings.setTcxGpxRenameDestDir(tcxGpxRenameDestDirText.getText());
             if(fileNameSubstitutionMap != null) {
                 Gson gson = new Gson();
