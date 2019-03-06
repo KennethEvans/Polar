@@ -1109,7 +1109,7 @@ public class PolarAccessManager extends JFrame
                                 out.println(gpxResponse);
                                 appendLineText("Wrote " + gpxFile.getPath());
                                 // Save for possible rename
-                                gpxRenameFile = tcxFile;
+                                gpxRenameFile = gpxFile;
                             } catch(FileNotFoundException ex) {
                                 appendLineText("Error writing "
                                     + gpxFile.getPath() + LS + ex.getMessage());
