@@ -24,6 +24,8 @@ public interface IConstants
     /** Our custom id for the user, used in register user */
     public static final String DEFAULT_USER_ID = "User1";
 
+    public int PRETTY_PRINT_INDENT = 2;
+
     /***
      * The name of the preference node for accessing preferences for this
      * application. On Windows these are found in the registry under

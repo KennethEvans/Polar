@@ -2,6 +2,7 @@ package net.kenevans.polar.accessmanager.ui;
 
 import java.awt.BorderLayout;
 import java.awt.Dimension;
+import java.awt.Font;
 import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -10,7 +11,9 @@ import java.awt.event.WindowEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.io.PrintWriter;
 import java.net.HttpURLConnection;
 import java.text.ParseException;
@@ -19,6 +22,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
+import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
@@ -29,7 +33,14 @@ import javax.swing.JSeparator;
 import javax.swing.JTextArea;
 import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
+import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.xml.bind.JAXBException;
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
+
+import org.w3c.dom.Document;
+import org.xml.sax.SAXException;
 
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
@@ -50,6 +61,7 @@ import net.kenevans.polar.utils.AboutBoxPanel;
 import net.kenevans.polar.utils.ImageUtils;
 import net.kenevans.polar.utils.JsonUtils;
 import net.kenevans.polar.utils.Utils;
+import net.kenevans.polar.utils.XmlUtils;
 import net.kenevans.trainingcenterdatabasev2.TrainingCenterDatabaseT;
 import net.kenevans.trainingcenterdatabasev2.parser.TCXParser;
 
@@ -78,6 +90,8 @@ public class PolarAccessManager extends JFrame
     private Settings settings;
     private PreferencesDialog preferencesDialog;
 
+    private String initialPrettyPrintDir;
+
     private JTextArea textArea;
     private JMenuBar menuBar;
 
@@ -93,6 +107,9 @@ public class PolarAccessManager extends JFrame
         System.out.println("PolarAccessManager started at: " + new Date());
 
         loadUserPreferences();
+
+        // Not a prference for now
+        initialPrettyPrintDir = settings.getInitialTcxGpxSrcDir();
 
         // Debug WebPage
         // http.setToken(null);
@@ -249,24 +266,6 @@ public class PolarAccessManager extends JFrame
                     appendLineText("deleteUser succeeded");
                 } else {
                     appendLineText("deleteUser failed "
-                        + http.getLastResponseCodeString());
-                }
-                return;
-            }
-        });
-        menu.add(menuItem);
-
-        // Commit transaction
-        menuItem = new JMenuItem();
-        menuItem.setText("Commit transaction");
-        menuItem.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent ae) {
-                appendLineText(LS + "commitTransaction");
-                boolean res = http.commitTransaction(false);
-                if(res) {
-                    appendLineText("commitTransaction succeeded");
-                } else {
-                    appendLineText("commitTransaction failed "
                         + http.getLastResponseCodeString());
                 }
                 return;
@@ -438,6 +437,26 @@ public class PolarAccessManager extends JFrame
         });
         menu.add(menuItem);
 
+        menu.add(new JSeparator());
+
+        // Commit transaction
+        menuItem = new JMenuItem();
+        menuItem.setText("Commit transaction");
+        menuItem.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent ae) {
+                appendLineText(LS + "commitTransaction");
+                boolean res = http.commitTransaction(false);
+                if(res) {
+                    appendLineText("commitTransaction succeeded");
+                } else {
+                    appendLineText("commitTransaction failed "
+                        + http.getLastResponseCodeString());
+                }
+                return;
+            }
+        });
+        menu.add(menuItem);
+
         // TCX/GPX
         menu = new JMenu();
         menu.setText("TCX/GPX");
@@ -485,6 +504,18 @@ public class PolarAccessManager extends JFrame
                 RenameTcxGpx rename = new RenameTcxGpx(PolarAccessManager.this,
                     true);
                 rename.processTcxFiles();
+            }
+        });
+        menu.add(menuItem);
+
+        // Pretty Print
+        menuItem = new JMenuItem();
+        menuItem.setText("Pretty Print...");
+        menuItem
+            .setToolTipText("Pretty Print an XML file such as TCX and GPX.");
+        menuItem.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent ae) {
+                prettyPrint();
             }
         });
         menu.add(menuItem);
@@ -671,6 +702,51 @@ public class PolarAccessManager extends JFrame
     private void quit() {
         settings.saveToPreferences(true);
         System.exit(0);
+    }
+
+    public void prettyPrint() {
+        JFileChooser chooser = new JFileChooser();
+        chooser.setMultiSelectionEnabled(false);
+        FileNameExtensionFilter tcxFilter = new FileNameExtensionFilter("TCX",
+            "tcx");
+        FileNameExtensionFilter gpxFilter = new FileNameExtensionFilter("GPX",
+            "gpx");
+        chooser.addChoosableFileFilter(tcxFilter);
+        chooser.addChoosableFileFilter(gpxFilter);
+        chooser.setFileFilter(tcxFilter);
+        chooser.setDialogTitle("Select XML File");
+        if(initialPrettyPrintDir != null) {
+            File file = new File(initialPrettyPrintDir);
+            if(file != null && file.exists()) {
+                chooser.setCurrentDirectory(file);
+            }
+        }
+        int result = chooser.showOpenDialog(this);
+        if(result != JFileChooser.APPROVE_OPTION) {
+            return;
+        }
+        File file = chooser.getSelectedFile();
+        // Save the selected path for next time
+        initialPrettyPrintDir = chooser.getSelectedFile().getParentFile()
+            .getPath();
+        String xml;
+        DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
+        dbf.setValidating(false);
+        DocumentBuilder db;
+        try {
+            db = dbf.newDocumentBuilder();
+            Document doc = db.parse(new FileInputStream(file));
+            xml = XmlUtils.convertDocumentToString(doc);
+            Utils.scrolledTextMsg(this,
+                XmlUtils.toPrettyString(xml, PRETTY_PRINT_INDENT),
+                file.getName(), 600, 400, Font.MONOSPACED, Font.BOLD, 12);
+        } catch(IOException ex) {
+            Utils.excMsg("I/O error during PrettyPrint", ex);
+        } catch(ParserConfigurationException ex) {
+            Utils.excMsg("Parser error during PrettyPrint", ex);
+        } catch(SAXException ex) {
+            Utils.excMsg("SAX error during PrettyPrint", ex);
+        }
     }
 
     /**

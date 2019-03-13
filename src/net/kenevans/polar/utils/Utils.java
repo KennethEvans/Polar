@@ -1,15 +1,36 @@
 package net.kenevans.polar.utils;
 
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Font;
+import java.awt.Frame;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.net.URL;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
+import javax.swing.ImageIcon;
+import javax.swing.JButton;
+import javax.swing.JDialog;
 import javax.swing.JFileChooser;
+import javax.swing.JFrame;
 import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JTextArea;
 import javax.swing.SwingUtilities;
 
+import net.kenevans.polar.accessmanager.ui.PolarAccessManager;
+
+/**
+ * Utils
+ * 
+ * @author Kenneth Evans, Jr.
+ */
 public class Utils
 {
     public static final String LS = System.getProperty("line.separator");
@@ -211,6 +232,84 @@ public class Utils
         Date now = new Date();
         final SimpleDateFormat dateFormatter = new SimpleDateFormat(pattern);
         return dateFormatter.format(now);
+    }
+
+    /**
+     * Displays a scrolled text dialog with the given message using a default
+     * font.
+     *
+     * @param parent
+     * @param message
+     * @param title
+     * @param width
+     * @param height
+     */
+    public static void scrolledTextMsg(Frame parent, String message,
+        String title, int width, int height) {
+        String fontName = Font.SANS_SERIF;
+        int fontStyle = Font.PLAIN;
+        int fontSize = 12;
+        scrolledTextMsg(parent, message, title, width, height, fontName,
+            fontStyle, fontSize);
+    }
+
+    /**
+     * Displays a scrolled text dialog with the given message. <br>
+     * Some useful possibilities for the font:
+     * <ul>
+     * <li>Font.SANS_SERIF, Font.PLAIN, 12</li>
+     * <li>Font.MONOSPACED, Font.BOLD, 12</li>
+     * <li>Font.DIALOG, Font.PLAIN, 12</li>
+     * </ul>
+     * You can also use a named font e.g. "Consolas".
+     * 
+     * @param parent
+     * @param message
+     * @param title
+     * @param width
+     * @param height
+     * @param fontName
+     * @param fontStyle
+     * @param fontSize
+     */
+    public static void scrolledTextMsg(Frame parent, String message,
+        String title, int width, int height, String fontName, int fontStyle,
+        int fontSize) {
+        final JDialog dialog = new JDialog(parent);
+
+        // Message
+        JPanel jPanel = new JPanel();
+        JTextArea textArea = new JTextArea(message);
+        textArea.setEditable(false);
+        textArea.setCaretPosition(0);
+        Font font = new Font(fontName, fontStyle, fontSize);
+        textArea.setFont(font);
+
+        JScrollPane scrollPane = new JScrollPane(textArea);
+        jPanel.add(scrollPane, BorderLayout.CENTER);
+        dialog.getContentPane().add(scrollPane);
+
+        // Close button
+        jPanel = new JPanel();
+        JButton button = new JButton("OK");
+        jPanel.add(button);
+        button.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                dialog.setVisible(false);
+                dialog.dispose();
+            }
+
+        });
+        dialog.getContentPane().add(jPanel, BorderLayout.SOUTH);
+
+        // Settings
+        dialog.setTitle(title);
+        dialog.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+        dialog.setSize(width, height);
+        // Has to be done after set size
+        dialog.setLocationRelativeTo(parent);
+        dialog.setVisible(true);
     }
 
 }
