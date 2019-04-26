@@ -953,7 +953,8 @@ public class FileRenameDialog extends JDialog implements IConstants
         String statusText = tcxStatusText.getText();
         if(statusText != null && !statusText.isEmpty()) {
             int selection = JOptionPane.showConfirmDialog(null,
-                tcxNewNameText + ":" + LS + statusText + LS + "Ok to continue?",
+                tcxNewNameText.getText() + ":" + LS + statusText + LS
+                    + "Ok to continue?",
                 "Possible Problem", JOptionPane.OK_CANCEL_OPTION,
                 JOptionPane.QUESTION_MESSAGE);
             if(selection != JOptionPane.OK_OPTION) {
@@ -978,7 +979,7 @@ public class FileRenameDialog extends JDialog implements IConstants
             statusText = gpxStatusText.getText();
             if(statusText != null && !statusText.isEmpty()) {
                 int selection = JOptionPane.showConfirmDialog(null,
-                    gpxNewNameText + ":" + LS + statusText + LS
+                    gpxNewNameText.getText() + ":" + LS + statusText + LS
                         + "Ok to continue?",
                     "Possible Problem", JOptionPane.OK_CANCEL_OPTION,
                     JOptionPane.QUESTION_MESSAGE);
