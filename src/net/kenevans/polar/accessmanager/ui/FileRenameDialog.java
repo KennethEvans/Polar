@@ -965,16 +965,16 @@ public class FileRenameDialog extends JDialog implements IConstants
         }
         result = rename(tcxOldNameText, tcxNewNameText, tcxStatusText, tcxFile);
         if(result == Result.FAIL) {
-            manager.appendLineText("Failed " + tcxNewNameText.getText());
+            manager.appendLineText("Rename Failed " + tcxNewNameText.getText());
             dispose();
             return result;
         }
         if(result == Result.ABORT) {
-            manager.appendLineText("Aborted " + tcxNewNameText.getText());
+            manager.appendLineText("Rename Aborted " + tcxNewNameText.getText());
             dispose();
             return result;
         }
-        manager.appendLineText("Wrote " + tcxNewNameText.getText());
+        manager.appendLineText("Rename Wrote " + tcxNewNameText.getText());
         if(gpxFile != null && gpx != null) {
             statusText = gpxStatusText.getText();
             if(statusText != null && !statusText.isEmpty()) {
@@ -992,16 +992,16 @@ public class FileRenameDialog extends JDialog implements IConstants
             result = rename(gpxOldNameText, gpxNewNameText, gpxStatusText,
                 gpxFile);
             if(result == Result.FAIL) {
-                manager.appendLineText("Failed " + gpxNewNameText.getText());
+                manager.appendLineText("Rename Failed " + gpxNewNameText.getText());
                 dispose();
                 return result;
             }
             if(result == Result.ABORT) {
-                manager.appendLineText("Aborted " + gpxNewNameText.getText());
+                manager.appendLineText("Rename Aborted " + gpxNewNameText.getText());
                 dispose();
                 return result;
             }
-            manager.appendLineText("Wrote " + gpxNewNameText.getText());
+            manager.appendLineText("Rename Wrote " + gpxNewNameText.getText());
         }
         dispose();
         return result;
