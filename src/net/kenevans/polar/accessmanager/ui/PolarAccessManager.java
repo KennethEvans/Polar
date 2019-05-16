@@ -16,12 +16,14 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.net.HttpURLConnection;
+import java.net.URL;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
+import javax.swing.ImageIcon;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JMenu;
@@ -48,10 +50,14 @@ import com.google.gson.reflect.TypeToken;
 import net.kenevans.gpxtrackpointextensionv2.GpxType;
 import net.kenevans.gpxtrackpointextensionv2.parser.GPXParser;
 import net.kenevans.polar.accessmanager.classes.AccessToken;
+import net.kenevans.polar.accessmanager.classes.Activity;
+import net.kenevans.polar.accessmanager.classes.ActivityLogs;
 import net.kenevans.polar.accessmanager.classes.Exercise;
 import net.kenevans.polar.accessmanager.classes.ExerciseHash;
 import net.kenevans.polar.accessmanager.classes.Exercises;
 import net.kenevans.polar.accessmanager.classes.ExercisesHash;
+import net.kenevans.polar.accessmanager.classes.PhysicalInformation;
+import net.kenevans.polar.accessmanager.classes.PhysicalInformations;
 import net.kenevans.polar.accessmanager.classes.TransactionLocation;
 import net.kenevans.polar.accessmanager.classes.User;
 import net.kenevans.polar.accessmanager.preferences.PreferencesDialog;
@@ -60,6 +66,7 @@ import net.kenevans.polar.accessmanager.ui.FileRenameDialog.Result;
 import net.kenevans.polar.utils.AboutBoxPanel;
 import net.kenevans.polar.utils.ImageUtils;
 import net.kenevans.polar.utils.JsonUtils;
+import net.kenevans.polar.utils.ScrolledHTMLDialog;
 import net.kenevans.polar.utils.Utils;
 import net.kenevans.polar.utils.XmlUtils;
 import net.kenevans.trainingcenterdatabasev2.TrainingCenterDatabaseT;
@@ -70,7 +77,7 @@ public class PolarAccessManager extends JFrame
 {
     public static final String LS = System.getProperty("line.separator");
     private static final String NAME = "Polar Access Manager";
-    private static final String VERSION = "1.1.0";
+    private static final String VERSION = "1.2.0";
     private static final String HELP_TITLE = NAME + " " + VERSION;
     private static final String AUTHOR = "Written by Kenneth Evans, Jr.";
     private static final String COPYRIGHT = "Copyright (c) 2019 Kenneth Evans";
@@ -89,6 +96,7 @@ public class PolarAccessManager extends JFrame
     private Http http;
     private Settings settings;
     private PreferencesDialog preferencesDialog;
+    private ScrolledHTMLDialog overviewDialog;
 
     private String initialPrettyPrintDir;
 
@@ -137,6 +145,10 @@ public class PolarAccessManager extends JFrame
         appendLineText("polarUserId=" + settings.getPolarUserId());
         appendLineText(
             "exerciseTransactionId=" + settings.getExerciseTransactionId());
+        appendLineText(
+            "activityTransactionId=" + settings.getActivityTransactionId());
+        appendLineText("physicalInfoTransactionId="
+            + settings.getPhysicalInfoTransactionId());
 
         // // DEBUG
         // appendLineText("");
@@ -294,10 +306,7 @@ public class PolarAccessManager extends JFrame
         });
         menu.add(menuItem);
 
-        // Data
-        menu = new JMenu();
-        menu.setText("Data");
-        menuBar.add(menu);
+        menu.add(new JSeparator());
 
         // Get available data
         menuItem = new JMenuItem();
@@ -321,6 +330,11 @@ public class PolarAccessManager extends JFrame
             }
         });
         menu.add(menuItem);
+
+        // Exercises
+        menu = new JMenu();
+        menu.setText("Exercises");
+        menuBar.add(menu);
 
         // Get exercises hash
         menuItem = new JMenuItem();
@@ -367,7 +381,7 @@ public class PolarAccessManager extends JFrame
             public void actionPerformed(ActionEvent ae) {
                 appendLineText(LS + "getExerciseTranslationLocation");
                 TransactionLocation obj = http
-                    .getExerciseTranslationLocation(false);
+                    .getExerciseTransactionLocation(false);
                 if(obj == null) {
                     appendLineText("getExerciseTranslationLocation failed "
                         + http.getLastResponseCodeString());
@@ -425,7 +439,7 @@ public class PolarAccessManager extends JFrame
         });
         menu.add(menuItem);
 
-        // Get gpx
+        // Get TCX/GPX
         menuItem = new JMenuItem();
         menuItem.setText("Get TCX/GPX");
         menuItem.addActionListener(new ActionListener() {
@@ -441,15 +455,195 @@ public class PolarAccessManager extends JFrame
 
         // Commit transaction
         menuItem = new JMenuItem();
-        menuItem.setText("Commit transaction");
+        menuItem.setText("Commit exercise transaction");
         menuItem.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent ae) {
-                appendLineText(LS + "commitTransaction");
-                boolean res = http.commitTransaction(false);
+                appendLineText(LS + "commitExerciseTransaction");
+                boolean res = http.commitExerciseTransaction(false);
                 if(res) {
-                    appendLineText("commitTransaction succeeded");
+                    appendLineText("commitExerciseTransaction succeeded");
                 } else {
-                    appendLineText("commitTransaction failed "
+                    appendLineText("commitExerciseTransaction failed "
+                        + http.getLastResponseCodeString());
+                }
+                return;
+            }
+        });
+        menu.add(menuItem);
+
+        // Activities
+        menu = new JMenu();
+        menu.setText("Activities");
+        menuBar.add(menu);
+
+        // Get activity transaction id
+        menuItem = new JMenuItem();
+        menuItem.setText("Get Activity Transaction ID");
+        menuItem.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent ae) {
+                appendLineText(LS + "getActivityTranslationLocation");
+                TransactionLocation obj = http
+                    .getActivityTransactionLocation(false);
+                if(obj == null) {
+                    appendLineText("getActivityTranslationLocation failed "
+                        + http.getLastResponseCodeString());
+                    return;
+                }
+                appendLineText("New activity_transaction-id="
+                    + settings.getActivityTransactionId());
+                appendLineText("Activity Transaction Location:");
+                Gson gson = new Gson();
+                String json = gson.toJson(obj);
+                appendLineText(JsonUtils.prettyFormat(json));
+                return;
+            }
+        });
+        menu.add(menuItem);
+
+        // Get activity list
+        menuItem = new JMenuItem();
+        menuItem.setText("Get Activity List");
+        menuItem.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent ae) {
+                appendLineText(LS + "getActivityList");
+                ActivityLogs obj = http.getActivityList(false);
+                if(obj == null) {
+                    appendLineText("getActivityList failed "
+                        + http.getLastResponseCodeString());
+                    return;
+                }
+                appendLineText("Activity List:");
+                List<String> activityList = obj.activityLogs;
+                if(activityList == null) {
+                    appendLineText("Activity List is null");
+                    return;
+                }
+                if(activityList.isEmpty()) {
+                    appendLineText("Activity List is empty");
+                    return;
+                }
+                for(String activity : activityList) {
+                    appendLineText(activity);
+                }
+                return;
+            }
+        });
+        menu.add(menuItem);
+
+        // Get activity summaries
+        menuItem = new JMenuItem();
+        menuItem.setText("Get Activity Summaries");
+        menuItem.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent ae) {
+                appendLineText(LS + "getActivitySummaries");
+                getActivitySummaries();
+            }
+        });
+        menu.add(menuItem);
+
+        menu.add(new JSeparator());
+
+        // Commit transaction
+        menuItem = new JMenuItem();
+        menuItem.setText("Commit activity transaction");
+        menuItem.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent ae) {
+                appendLineText(LS + "commitActivityTransaction");
+                boolean res = http.commitActivityTransaction(false);
+                if(res) {
+                    appendLineText("commitActivityTransaction succeeded");
+                } else {
+                    appendLineText("commitActivityTransaction failed "
+                        + http.getLastResponseCodeString());
+                }
+                return;
+            }
+        });
+        menu.add(menuItem);
+
+        // Physical Information
+        menu = new JMenu();
+        menu.setText("Physical Info");
+        menuBar.add(menu);
+
+        // Get physical info transaction id
+        menuItem = new JMenuItem();
+        menuItem.setText("Get Physical Info Transaction ID");
+        menuItem.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent ae) {
+                appendLineText(LS + "getPhysicalInfoTranslationLocation");
+                TransactionLocation obj = http
+                    .getPhysicalInfoTransactionLocation(false);
+                if(obj == null) {
+                    appendLineText("getPhysicalInfoTranslationLocation failed "
+                        + http.getLastResponseCodeString());
+                    return;
+                }
+                appendLineText("New physical_info_transaction-id="
+                    + settings.getActivityTransactionId());
+                appendLineText("Physical Info Transaction Location:");
+                Gson gson = new Gson();
+                String json = gson.toJson(obj);
+                appendLineText(JsonUtils.prettyFormat(json));
+                return;
+            }
+        });
+        menu.add(menuItem);
+
+        // Get physical info list
+        menuItem = new JMenuItem();
+        menuItem.setText("Get Physical Info List");
+        menuItem.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent ae) {
+                appendLineText(LS + "getPhysicalInfoList");
+                PhysicalInformations obj = http.getPhysicalInfoList(false);
+                if(obj == null) {
+                    appendLineText("getPhysicalInfoList failed "
+                        + http.getLastResponseCodeString());
+                    return;
+                }
+                appendLineText("Physical Information List:");
+                List<String> activityList = obj.physicalInformations;
+                if(activityList == null) {
+                    appendLineText("Physical Info List is null");
+                    return;
+                }
+                if(activityList.isEmpty()) {
+                    appendLineText("Physical Info List is empty");
+                    return;
+                }
+                for(String physicalInfo : activityList) {
+                    appendLineText(physicalInfo);
+                }
+                return;
+            }
+        });
+        menu.add(menuItem);
+
+        // Get physical information summaries
+        menuItem = new JMenuItem();
+        menuItem.setText("Get Physical Info Summaries");
+        menuItem.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent ae) {
+                appendLineText(LS + "getPhysicalInfoSummaries");
+                getPhysicalInfoSummaries();
+            }
+        });
+        menu.add(menuItem);
+
+        menu.add(new JSeparator());
+
+        // Commit transaction
+        menuItem = new JMenuItem();
+        menuItem.setText("Commit physical info transaction");
+        menuItem.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent ae) {
+                appendLineText(LS + "commitPhysicalInfoTransaction");
+                boolean res = http.commitPhysicalInfoTransaction(false);
+                if(res) {
+                    appendLineText("commitPhysicalInfoTransaction succeeded");
+                } else {
+                    appendLineText("commitPhysicalInfoTransaction failed "
                         + http.getLastResponseCodeString());
                 }
                 return;
@@ -464,7 +658,7 @@ public class PolarAccessManager extends JFrame
 
         // TCX to GPX
         menuItem = new JMenuItem();
-        menuItem.setText("TCX to GPXConvert ...");
+        menuItem.setText("Convert TCX to GPX...");
         menuItem.setToolTipText("Converts TCX filesto GPX.");
         menuItem.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent ae) {
@@ -524,6 +718,15 @@ public class PolarAccessManager extends JFrame
         menu = new JMenu();
         menu.setText("Help");
         menuBar.add(menu);
+
+        menuItem = new JMenuItem();
+        menuItem.setText("Overview...");
+        menuItem.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent ae) {
+                overview();
+            }
+        });
+        menu.add(menuItem);
 
         menuItem = new JMenuItem();
         menuItem.setText("About");
@@ -694,6 +897,30 @@ public class PolarAccessManager extends JFrame
      */
     public void appendLineText(String text) {
         appendText(text + LS);
+    }
+
+    private void overview() {
+        String resource = "/resources/PolarAccessManager.htm";
+        URL contentsUrl = ScrolledHTMLDialog.class.getResource(resource);
+        if(contentsUrl == null) {
+            System.err.println("Couldn't find file: " + resource);
+            return;
+        }
+        if(overviewDialog == null) {
+            overviewDialog = new ScrolledHTMLDialog(this, contentsUrl);
+            overviewDialog.setTitle("Overview");
+            overviewDialog.setSize(new Dimension(500, 500));
+            // For modal, use this and dialog.showDialog() instead of
+            // dialog.setVisible(true)
+            // dialog.setModalityType(Dialog.ModalityType.APPLICATION_MODAL);
+            overviewDialog.setDefaultCloseOperation(JFrame.HIDE_ON_CLOSE);
+            URL url = PolarAccessManager.class
+                .getResource("/resources/PolarAccessManager.32x32.png");
+            if(url != null) {
+                overviewDialog.setIconImage(new ImageIcon(url).getImage());
+            }
+        }
+        overviewDialog.setVisible(true);
     }
 
     /**
@@ -950,7 +1177,7 @@ public class PolarAccessManager extends JFrame
 
     private void getExerciseSummaries() {
         // Get a new transaction-id if available
-        http.getExerciseTranslationLocation(false);
+        http.getExerciseTransactionLocation(false);
         appendLineText("getExerciseTranslationLocation() returned "
             + http.getLastResponseCodeString());
         // Get the exerciseList
@@ -1005,15 +1232,147 @@ public class PolarAccessManager extends JFrame
                 appendLineText("  duration=" + exercise.duration);
                 appendLineText("  distance=" + exercise.distance);
                 appendLineText("  device=" + exercise.device);
-                // appendLineText(" clubName=" + exercise.clubName);
-                // appendLineText(" clubId=" + exercise.clubId);
+                appendLineText(" clubName=" + exercise.clubName);
+                appendLineText(" clubId=" + exercise.clubId);
+            }
+        }
+    }
+
+    private void getActivitySummaries() {
+        // Get a new transaction-id if available
+        http.getActivityTransactionLocation(false);
+        appendLineText("getActivityTransactionLocation() returned "
+            + http.getLastResponseCodeString());
+        // Get the physicalInfoList
+        ActivityLogs activities = http.getActivityList(false);
+        if(!http.lastResponseMessage.isEmpty()) {
+            appendLineText(
+                "getActivityList() returned " + http.lastResponseMessage);
+        }
+        switch(http.lastResponseCode) {
+        case HttpURLConnection.HTTP_OK:
+            break;
+        case HttpURLConnection.HTTP_NO_CONTENT:
+            appendLineText("There are no activities");
+            return;
+        case HttpURLConnection.HTTP_NOT_FOUND:
+            appendLineText("May need a new transaction-id, wait a few minutes");
+            return;
+        default:
+            appendLineText(http.lastResponseMessage);
+            return;
+        }
+        if(activities == null) {
+            appendLineText("activities is null");
+            return;
+        }
+        // Loop over activities
+        List<String> activitiesList = activities.activityLogs;
+        if(activitiesList == null) {
+            appendLineText("activitiesList is null");
+            return;
+        }
+        if(activitiesList.isEmpty()) {
+            appendLineText("activitiesList is empty");
+            return;
+        }
+        int nActivities = 0;
+        Activity activity;
+        for(String activityString : activitiesList) {
+            nActivities++;
+            activity = http.getActivitySummary(activityString, false);
+            if(!http.lastResponseMessage.isEmpty()) {
+                appendLineText("getActivitySummary() returned "
+                    + http.getLastResponseCodeString());
+            }
+            if(activity != null) {
+                appendLineText("Activity " + nActivities);
+                appendLineText("  id=" + activity.id);
+                appendLineText("  polar-user=" + activity.polarUser);
+                appendLineText("  created=" + activity.created);
+                appendLineText("  date=" + activity.date);
+                appendLineText("  duration=" + activity.duration);
+                appendLineText("  calories=" + activity.calories);
+                appendLineText("  active-calories=" + activity.activeCalories);
+                appendLineText("  active-steps=" + activity.activeSteps);
+            }
+        }
+    }
+
+    private void getPhysicalInfoSummaries() {
+        // Get a new transaction-id if available
+        http.getPhysicalInfoTransactionLocation(false);
+        appendLineText("getPhysicalInfoTransactionLocation() returned "
+            + http.getLastResponseCodeString());
+        // Get the physicalInfoList
+        PhysicalInformations physicalInformations = http
+            .getPhysicalInfoList(false);
+        if(!http.lastResponseMessage.isEmpty()) {
+            appendLineText(
+                "getPhysicalInfoList() returned " + http.lastResponseMessage);
+        }
+        switch(http.lastResponseCode) {
+        case HttpURLConnection.HTTP_OK:
+            break;
+        case HttpURLConnection.HTTP_NO_CONTENT:
+            appendLineText("There are no physical informations");
+            return;
+        case HttpURLConnection.HTTP_NOT_FOUND:
+            appendLineText("May need a new transaction-id, wait a few minutes");
+            return;
+        default:
+            appendLineText(http.lastResponseMessage);
+            return;
+        }
+        if(physicalInformations == null) {
+            appendLineText("physicalInformations is null");
+            return;
+        }
+        // Loop over physical informations
+        List<String> physicalInformationsList = physicalInformations.physicalInformations;
+        if(physicalInformationsList == null) {
+            appendLineText("physicalInformationsList is null");
+            return;
+        }
+        if(physicalInformationsList.isEmpty()) {
+            appendLineText("physicalInformationsList is empty");
+            return;
+        }
+        int nActivity = 0;
+        PhysicalInformation physicalInformation;
+        for(String physicalInformationString : physicalInformationsList) {
+            nActivity++;
+            physicalInformation = http
+                .getPhysicalInfoSummary(physicalInformationString, false);
+            if(!http.lastResponseMessage.isEmpty()) {
+                appendLineText("getPhysicalInfoSummary() returned "
+                    + http.getLastResponseCodeString());
+            }
+            if(physicalInformation != null) {
+                appendLineText("Physical Information " + nActivity);
+                appendLineText(" id=" + physicalInformation.id);
+                appendLineText("  polar-user=" + physicalInformation.polarUser);
+                appendLineText("  created=" + physicalInformation.created);
+                appendLineText("  weight=" + physicalInformation.weight);
+                appendLineText("  height=" + physicalInformation.height);
+                appendLineText("  maximum-heart-rate="
+                    + physicalInformation.maximumHeartRate);
+                appendLineText("  resting-heart-rate="
+                    + physicalInformation.restingHeartRate);
+                appendLineText("  aerobic-threshold="
+                    + physicalInformation.aerobicThreshold);
+                appendLineText("  anaerobic-threshold="
+                    + physicalInformation.anaerobicThreshold);
+                appendLineText("  vo2-max=" + physicalInformation.vo2Max);
+                appendLineText(
+                    "  weight-source=" + physicalInformation.weightSource);
             }
         }
     }
 
     private void getTpxGpx() {
         // Get a new transaction-id if available
-        http.getExerciseTranslationLocation(false);
+        http.getExerciseTransactionLocation(false);
         appendLineText("getExerciseTranslationLocation() returned "
             + http.getLastResponseCodeString());
         // Get the exerciseList

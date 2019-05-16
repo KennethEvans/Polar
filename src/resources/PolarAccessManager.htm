@@ -1,0 +1,50 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html lang="en-us">
+<title>Repository Manager</title><body>
+<h1 align="center"><img src="PolarAccessManager.32x32.png" alt="Image" width="64" height="64" align="middle"/>Polar Access Manager </h1>
+<p>Polar Access  Manager is a Java application to retrieve resources from Polar Flow using the Polar AccessLink web service. </p>
+<p><strong>Interface</strong></p>
+<p>There are menu at the top to do the various steps required by AccessLink, and thwere is a console at the bottom to show the resulting output</p>
+<h3><strong>File Menu </strong></h3>
+<p><strong>Preferences</strong></p>
+<p> Allows you to set preferences.</p>
+<h3>Basic Menu</h3>
+<p><strong>Get Access</strong></p>
+<p><strong>Register User</strong></p>
+<p><strong>Get User Information</strong></p>
+<p><strong>Delete User</strong></p>
+<p><strong>Get Rate Limits</strong></p>
+<p><strong>Get Available Data</strong></p>
+<p>Returns a list of the available data.</p>
+<h3>Exercises</h3>
+<p>This menu has items related to Exercies.</p>
+<p><strong>Get Exercises Hash</strong></p>
+<p>This allows you to get a list of exercises without using a transaction ID. </p>
+<p><strong>Get Exercise Transaction ID</strong></p>
+<p>Gets an exercise transaction ID. This ID is good for 10 minutes, and allows you to access the exercises. It may be some time, up to as long as a day, before you can get a new transaction ID after it expires. If the transaction ID is no longer valid or they have not reset it, you will get a 404 Not Found error. The only solution, assuming there is data available, is to wait. </p>
+<p><strong>Get Exercise List</strong></p>
+<p>Get a list of the URLs of the available exercises. You must get  a valid transaction ID first. This list is mostly valuable for debugging and understanding what is happening. </p>
+<p><strong>Get Exercise Summaries</strong></p>
+<p>Gets the exercise summaries. This option is self-contained and gets a transaction ID, then the list of exercises, and then  the actual exercises from the list. It does not commit the transaction. </p>
+<p><strong>Get TCX/GPX</strong></p>
+<p>In normal use this is the menu item used most. It gets the TCX and GPX files for the available exercises. It is also stand-alone and gets a transaction ID, then the files. It does not commit the transaction. There will be no GPX file if GPS was not used for the exercise. There are a number of options for overwriting and renaming these files during the processing, which you set in the Preferences. </p>
+<p><strong>Commit Exercise Transaction</strong></p>
+<p>This commits the transaction. Once committed the data will no longer be available in AccessLink ever. They expect you to commit the transaction, and doing so will keep you from processing the same items each time. Even if not committed, the data will no longer be available after about a month. See the AccessLink documentation for more and current information. </p>
+<h3>Activities</h3>
+<p>This menu has items related to Activities. </p>
+<h3>Physical Info</h3>
+<p>This menu has items related to Phisical Information. </p>
+<h3>TCX/GPX</h3>
+<p>This menu has items that manage TCX and GPX files.</p>
+<p><strong>Convert TCX to GPX.</strong></p>
+<p>Creates a GPX file from a TCX file.</p>
+<p><strong>Merge TCX and GPX to GPX</strong></p>
+<p>Takes the heart rate information from the TCX file and adds it to the GPX file as a Garmin TrackpointExtensionsV2  extension to the GPX file format.</p>
+<p><strong>Rename TCX and GPX</strong></p>
+<p>The names of the files downloaded from  Polar Flow or through Polar AccessLink do not include the type of exercise or location. This option gives you a chance to rename them using information in the TCX file. This includes the type of exercise and a location from the Notes. You have to manually add a note with the location information when you save the exercise, or it can be added later in Polar Flow. The information added does not have to be a location, but can be anything you want. The words will be separated by underscores in the file name. It only uses the words up to the first period or 40 characters, whichever comes first. (This allows you to add additional information besides the location.) There will be dialog boxes for each TCX file choosen that show you what will happen and allow you to abort or override the default choices. </p>
+<h3>Help Menu </h3>
+<p>There are options for an overview dialog and an about dialog.</p>
+<h3>Preferences</h3>
+<p>&nbsp;</p>
+</body>
+</html>

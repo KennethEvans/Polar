@@ -11,9 +11,13 @@ import javax.swing.JOptionPane;
 import com.google.gson.Gson;
 
 import net.kenevans.polar.accessmanager.classes.AccessToken;
+import net.kenevans.polar.accessmanager.classes.Activity;
+import net.kenevans.polar.accessmanager.classes.ActivityLogs;
 import net.kenevans.polar.accessmanager.classes.Exercise;
 import net.kenevans.polar.accessmanager.classes.Exercises;
 import net.kenevans.polar.accessmanager.classes.ExercisesHash;
+import net.kenevans.polar.accessmanager.classes.PhysicalInformation;
+import net.kenevans.polar.accessmanager.classes.PhysicalInformations;
 import net.kenevans.polar.accessmanager.classes.TransactionLocation;
 import net.kenevans.polar.accessmanager.classes.User;
 import net.kenevans.polar.utils.Utils;
@@ -35,7 +39,7 @@ public class Http implements IConstants
     // private String getClientUserId() = DEFAULT_USER_ID;
     // private String getPolarUserId() = "";
     // private Integer getExerciseTransactionId() = -1;
-    // public static List<String> exerciseList = new ArrayList<>();
+    // public static List<String> physicalInfoList = new ArrayList<>();
     public int lastResponseCode;
     public String lastResponseMessage = "";
     public boolean debug;
@@ -103,18 +107,50 @@ public class Http implements IConstants
     }
 
     /**
-     * @return The value of getExerciseTransactionId().
+     * @return The value of physicalInfoTransactionId().
      */
     public Integer getExerciseTransactionId() {
         return manager.getSettings().getExerciseTransactionId();
     }
 
     /**
-     * @param getExerciseTransactionId() The new value for
-     *            getExerciseTransactionId().
+     * @return The value of activityTransactionId().
      */
-    public void setExerciseTransactionId(Integer exerciseTransactionId) {
-        manager.getSettings().setExerciseTransactionId(exerciseTransactionId);
+    public Integer getActivityTransactionId() {
+        return manager.getSettings().getActivityTransactionId();
+    }
+
+    /**
+     * @return The value of physicalInfoTransactionId().
+     */
+    public Integer getPhysicalInfoTransactionId() {
+        return manager.getSettings().getPhysicalInfoTransactionId();
+    }
+
+    /**
+     * @param physicalInfoTransactionId The new value for
+     *            physicalInfoTransactionId.
+     */
+    public void setExerciseTransactionId(Integer physicalInfoTransactionId) {
+        manager.getSettings()
+            .setExerciseTransactionId(physicalInfoTransactionId);
+    }
+
+    /**
+     * @param activityTransactionId The new value for activityTransactionId.
+     */
+    public void setActivityTransactionId(Integer activityTransactionId) {
+        manager.getSettings().setActivityTransactionId(activityTransactionId);
+    }
+
+    /**
+     * @param physicalInfoTransactionId The new value for
+     *            physicalInfoTransactionId.
+     */
+    public void setPhysicalInfoTransactionId(
+        Integer physicalInfoTransactionId) {
+        manager.getSettings()
+            .setPhysicalInfoTransactionId(physicalInfoTransactionId);
     }
 
     /**
@@ -514,9 +550,9 @@ public class Http implements IConstants
     }
 
     /**
-     * Get available exercise. Does not return a valid JSONObject. Returns a
-     * JSON list of something similar to exercise, with some differences. This
-     * may be undocumented, hence a mistake.
+     * Get available physicalInfo. Does not return a valid JSONObject. Returns a
+     * JSON list of something similar to physicalInfo, with some differences.
+     * This may be undocumented, hence a mistake.
      * 
      * @return
      */
@@ -530,7 +566,7 @@ public class Http implements IConstants
             return null;
         }
         Request req = new Request(Request.Method.GET,
-            ACCESS_LINK_URL + "exercises");
+            ACCESS_LINK_URL + "physicalInfos");
         req.setAuthorization(Request.AuthMode.BEARER, getToken());
         req.setRequestProperty("Accept", "application/json");
 
@@ -553,7 +589,7 @@ public class Http implements IConstants
             return null;
         } else {
             // This is not a JSON element as returned, make one
-            json = "{\"exercises-hash\" :" + json + "}";
+            json = "{\"physicalInfos-hash\" :" + json + "}";
             System.out.println(json);
             Gson gson = new Gson();
             ExercisesHash obj = gson.fromJson(json,
@@ -562,7 +598,7 @@ public class Http implements IConstants
         }
     }
 
-    public TransactionLocation getExerciseTranslationLocation(boolean popup) {
+    public TransactionLocation getExerciseTransactionLocation(boolean popup) {
         lastResponseMessage = "";
         if(getToken() == null) {
             lastResponseMessage = "No token";
@@ -572,7 +608,7 @@ public class Http implements IConstants
             return null;
         }
         Request req = new Request(Request.Method.POST, ACCESS_LINK_URL
-            + "users/" + getPolarUserId() + "/exercise-transactions");
+            + "users/" + getPolarUserId() + "/physicalInfo-transactions");
         if(debug) {
             System.out.println("*** " + req.url);
         }
@@ -602,10 +638,11 @@ public class Http implements IConstants
             TransactionLocation obj = gson.fromJson(json,
                 net.kenevans.polar.accessmanager.classes.TransactionLocation.class);
             if(obj != null) {
-                int exerciseTransactionId = obj.transactionId;
+                int physicalInfoTransactionId = obj.transactionId;
                 manager.getSettings()
-                    .saveExerciseTransactionId(exerciseTransactionId);
-                System.out.println("transaction_id=" + exerciseTransactionId);
+                    .saveExerciseTransactionId(physicalInfoTransactionId);
+                System.out
+                    .println("transaction_id=" + physicalInfoTransactionId);
                 String resourceUri = obj.resourceUri;
                 System.out.println("resourceUri=" + resourceUri);
             }
@@ -613,7 +650,112 @@ public class Http implements IConstants
         }
     }
 
-    public boolean commitTransaction(boolean popup) {
+    public TransactionLocation getActivityTransactionLocation(boolean popup) {
+        lastResponseMessage = "";
+        if(getToken() == null) {
+            lastResponseMessage = "No token";
+            if(popup) {
+                Utils.errMsg(lastResponseMessage);
+            }
+            return null;
+        }
+        Request req = new Request(Request.Method.POST, ACCESS_LINK_URL
+            + "users/" + getPolarUserId() + "/activity-transactions");
+        if(debug) {
+            System.out.println("*** " + req.url);
+        }
+        req.setAuthorization(Request.AuthMode.BEARER, getToken());
+        req.setRequestProperty("Accept", "application/json");
+
+        int responseCode = lastResponseCode = req.getResponseCode();
+        if(responseCode != HttpURLConnection.HTTP_CREATED) {
+            lastResponseMessage = "getTranslationLocation Failed: "
+                + getLastResponseCodeString();
+            String error = req.getError();
+            if(error != null) {
+                lastResponseMessage += LS + wordWrap(error, 80);
+            }
+            if(popup) {
+                Utils.errMsg(lastResponseMessage);
+            }
+            return null;
+        }
+
+        String json = req.getInput();
+        if(json == null) {
+            return null;
+        } else {
+            System.out.println(json);
+            Gson gson = new Gson();
+            TransactionLocation obj = gson.fromJson(json,
+                net.kenevans.polar.accessmanager.classes.TransactionLocation.class);
+            if(obj != null) {
+                int activityTransactionId = obj.transactionId;
+                manager.getSettings()
+                    .saveActivityTransactionId(activityTransactionId);
+                System.out.println("transaction_id=" + activityTransactionId);
+                String resourceUri = obj.resourceUri;
+                System.out.println("resourceUri=" + resourceUri);
+            }
+            return obj;
+        }
+    }
+
+    public TransactionLocation getPhysicalInfoTransactionLocation(
+        boolean popup) {
+        lastResponseMessage = "";
+        if(getToken() == null) {
+            lastResponseMessage = "No token";
+            if(popup) {
+                Utils.errMsg(lastResponseMessage);
+            }
+            return null;
+        }
+        Request req = new Request(Request.Method.POST,
+            ACCESS_LINK_URL + "users/" + getPolarUserId()
+                + "/physical-information-transactions");
+        if(debug) {
+            System.out.println("*** " + req.url);
+        }
+        req.setAuthorization(Request.AuthMode.BEARER, getToken());
+        req.setRequestProperty("Accept", "application/json");
+
+        int responseCode = lastResponseCode = req.getResponseCode();
+        if(responseCode != HttpURLConnection.HTTP_CREATED) {
+            lastResponseMessage = "getTranslationLocation Failed: "
+                + getLastResponseCodeString();
+            String error = req.getError();
+            if(error != null) {
+                lastResponseMessage += LS + wordWrap(error, 80);
+            }
+            if(popup) {
+                Utils.errMsg(lastResponseMessage);
+            }
+            return null;
+        }
+
+        String json = req.getInput();
+        if(json == null) {
+            return null;
+        } else {
+            System.out.println(json);
+            Gson gson = new Gson();
+            TransactionLocation obj = gson.fromJson(json,
+                net.kenevans.polar.accessmanager.classes.TransactionLocation.class);
+            if(obj != null) {
+                int physicalInfoTransactionId = obj.transactionId;
+                manager.getSettings()
+                    .savePhysicalInfoTransactionId(physicalInfoTransactionId);
+                System.out
+                    .println("transaction_id=" + physicalInfoTransactionId);
+                String resourceUri = obj.resourceUri;
+                System.out.println("resourceUri=" + resourceUri);
+            }
+            return obj;
+        }
+    }
+
+    public boolean commitExerciseTransaction(boolean popup) {
         lastResponseMessage = "";
         if(getToken() == null) {
             lastResponseMessage = "No token";
@@ -623,7 +765,7 @@ public class Http implements IConstants
             return false;
         }
         if(getExerciseTransactionId() < 0) {
-            lastResponseMessage = "No getExerciseTransactionId()";
+            lastResponseMessage = "No physicalInfoTransactionId";
             if(popup) {
                 Utils.errMsg(lastResponseMessage);
             }
@@ -639,7 +781,7 @@ public class Http implements IConstants
         }
         Request req = new Request(Request.Method.PUT,
             ACCESS_LINK_URL + "users/" + getPolarUserId()
-                + "/exercise-transactions/" + getExerciseTransactionId());
+                + "/physicalInfo-transactions/" + getExerciseTransactionId());
         if(debug) {
             System.out.println("*** " + req.url);
         }
@@ -658,6 +800,106 @@ public class Http implements IConstants
             }
             return false;
         }
+        setExerciseTransactionId(D_EXERCISE_TRANSACTION_ID);
+        return true;
+    }
+
+    public boolean commitActivityTransaction(boolean popup) {
+        lastResponseMessage = "";
+        if(getToken() == null) {
+            lastResponseMessage = "No token";
+            if(popup) {
+                Utils.errMsg(lastResponseMessage);
+            }
+            return false;
+        }
+        if(getActivityTransactionId() < 0) {
+            lastResponseMessage = "No activityTransactionId";
+            if(popup) {
+                Utils.errMsg(lastResponseMessage);
+            }
+            return false;
+        }
+        int result = JOptionPane.showConfirmDialog(null,
+            "Are you sure?" + LS
+                + "This will cause any existing data on Polar Access" + LS
+                + "to be removed forever." + LS + "OK to continue?",
+            " Confirmation", JOptionPane.OK_CANCEL_OPTION);
+        if(result != JOptionPane.OK_OPTION) {
+            return false;
+        }
+        Request req = new Request(Request.Method.PUT,
+            ACCESS_LINK_URL + "users/" + getPolarUserId()
+                + "/activity-transactions/" + getActivityTransactionId());
+        if(debug) {
+            System.out.println("*** " + req.url);
+        }
+        req.setAuthorization(Request.AuthMode.BEARER, getToken());
+
+        int responseCode = lastResponseCode = req.getResponseCode();
+        if(responseCode != HttpURLConnection.HTTP_OK) {
+            lastResponseMessage = "commitTransaction Failed: "
+                + getLastResponseCodeString();
+            String error = req.getError();
+            if(error != null) {
+                lastResponseMessage += LS + wordWrap(error, 80);
+            }
+            if(popup) {
+                Utils.errMsg(lastResponseMessage);
+            }
+            return false;
+        }
+        setActivityTransactionId(D_ACTIVITY_TRANSACTION_ID);
+        return true;
+    }
+
+    public boolean commitPhysicalInfoTransaction(boolean popup) {
+        lastResponseMessage = "";
+        if(getToken() == null) {
+            lastResponseMessage = "No token";
+            if(popup) {
+                Utils.errMsg(lastResponseMessage);
+            }
+            return false;
+        }
+        if(getPhysicalInfoTransactionId() < 0) {
+            lastResponseMessage = "No physicalInfoTransactionId";
+            if(popup) {
+                Utils.errMsg(lastResponseMessage);
+            }
+            return false;
+        }
+        int result = JOptionPane.showConfirmDialog(null,
+            "Are you sure?" + LS
+                + "This will cause any existing data on Polar Access" + LS
+                + "to be removed forever." + LS + "OK to continue?",
+            " Confirmation", JOptionPane.OK_CANCEL_OPTION);
+        if(result != JOptionPane.OK_OPTION) {
+            return false;
+        }
+        Request req = new Request(Request.Method.PUT,
+            ACCESS_LINK_URL + "users/" + getPolarUserId()
+                + "/physical-information-transactions/"
+                + getPhysicalInfoTransactionId());
+        if(debug) {
+            System.out.println("*** " + req.url);
+        }
+        req.setAuthorization(Request.AuthMode.BEARER, getToken());
+
+        int responseCode = lastResponseCode = req.getResponseCode();
+        if(responseCode != HttpURLConnection.HTTP_OK) {
+            lastResponseMessage = "commitTransaction Failed: "
+                + getLastResponseCodeString();
+            String error = req.getError();
+            if(error != null) {
+                lastResponseMessage += LS + wordWrap(error, 80);
+            }
+            if(popup) {
+                Utils.errMsg(lastResponseMessage);
+            }
+            return false;
+        }
+        setPhysicalInfoTransactionId(D_PHYSICAL_INFO_TRANSACTION_ID);
         return true;
     }
 
@@ -671,7 +913,7 @@ public class Http implements IConstants
             return null;
         }
         if(getExerciseTransactionId() < 0) {
-            lastResponseMessage = "No getExerciseTransactionId()";
+            lastResponseMessage = "No exerciseTransactionId";
             if(popup) {
                 Utils.errMsg(lastResponseMessage);
             }
@@ -679,7 +921,7 @@ public class Http implements IConstants
         }
         Request req = new Request(Request.Method.GET,
             ACCESS_LINK_URL + "users/" + getPolarUserId()
-                + "/exercise-transactions/" + getExerciseTransactionId());
+                + "/physicalInfo-transactions/" + getExerciseTransactionId());
         if(debug) {
             System.out.println("*** " + req.url);
         }
@@ -700,7 +942,6 @@ public class Http implements IConstants
         }
 
         String json = req.getInput();
-        // Http.exerciseList.clear();
         if(json == null) {
             return null;
         } else {
@@ -709,13 +950,137 @@ public class Http implements IConstants
             Exercises obj = gson.fromJson(json,
                 net.kenevans.polar.accessmanager.classes.Exercises.class);
             if(obj != null) {
-                List<String> exerciseList = obj.exercises;
-                if(exerciseList == null || exerciseList.isEmpty()) {
+                List<String> exercisesList = obj.exercises;
+                if(exercisesList == null || exercisesList.isEmpty()) {
                     System.out.println("No exercises");
                 } else {
-                    for(String exercise : exerciseList) {
-                        // Http.exerciseList.add(exercise);
+                    for(String exercise : exercisesList) {
+                        // Http.physicalInfoList.add(physicalInfo);
                         System.out.println(exercise);
+                    }
+                }
+            }
+            return obj;
+        }
+    }
+
+    public ActivityLogs getActivityList(boolean popup) {
+        lastResponseMessage = "";
+        if(getToken() == null) {
+            lastResponseMessage = "No token";
+            if(popup) {
+                Utils.errMsg(lastResponseMessage);
+            }
+            return null;
+        }
+        if(getActivityTransactionId() < 0) {
+            lastResponseMessage = "No activityTransactionId";
+            if(popup) {
+                Utils.errMsg(lastResponseMessage);
+            }
+            return null;
+        }
+        Request req = new Request(Request.Method.GET,
+            ACCESS_LINK_URL + "users/" + getPolarUserId()
+                + "/activity-transactions/" + getActivityTransactionId());
+        if(debug) {
+            System.out.println("*** " + req.url);
+        }
+        req.setAuthorization(Request.AuthMode.BEARER, getToken());
+        req.setRequestProperty("Accept", "application/json");
+        int responseCode = lastResponseCode = req.getResponseCode();
+        if(responseCode != HttpURLConnection.HTTP_OK) {
+            lastResponseMessage = "getActivityList: "
+                + getLastResponseCodeString();
+            String error = req.getError();
+            if(error != null) {
+                lastResponseMessage += LS + wordWrap(error, 80);
+            }
+            if(popup) {
+                Utils.errMsg(lastResponseMessage);
+            }
+            return null;
+        }
+
+        String json = req.getInput();
+        if(json == null) {
+            return null;
+        } else {
+            System.out.println(json);
+            Gson gson = new Gson();
+            ActivityLogs obj = gson.fromJson(json,
+                net.kenevans.polar.accessmanager.classes.ActivityLogs.class);
+            if(obj != null) {
+                List<String> activityList = obj.activityLogs;
+                if(activityList == null || activityList.isEmpty()) {
+                    System.out.println("No activity logs");
+                } else {
+                    for(String activity : activityList) {
+                        // Http.physicalInfoList.add(physicalInfo);
+                        System.out.println(activity);
+                    }
+                }
+            }
+            return obj;
+        }
+    }
+
+    public PhysicalInformations getPhysicalInfoList(boolean popup) {
+        lastResponseMessage = "";
+        if(getToken() == null) {
+            lastResponseMessage = "No token";
+            if(popup) {
+                Utils.errMsg(lastResponseMessage);
+            }
+            return null;
+        }
+        if(getPhysicalInfoTransactionId() < 0) {
+            lastResponseMessage = "No physicalInfoTransactionId";
+            if(popup) {
+                Utils.errMsg(lastResponseMessage);
+            }
+            return null;
+        }
+        Request req = new Request(Request.Method.GET,
+            ACCESS_LINK_URL + "users/" + getPolarUserId()
+                + "/physical-information-transactions/"
+                + getPhysicalInfoTransactionId());
+        if(debug) {
+            System.out.println("*** " + req.url);
+        }
+        req.setAuthorization(Request.AuthMode.BEARER, getToken());
+        req.setRequestProperty("Accept", "application/json");
+        int responseCode = lastResponseCode = req.getResponseCode();
+        if(responseCode != HttpURLConnection.HTTP_OK) {
+            lastResponseMessage = "getPhysicalInfoList: "
+                + getLastResponseCodeString();
+            String error = req.getError();
+            if(error != null) {
+                lastResponseMessage += LS + wordWrap(error, 80);
+            }
+            if(popup) {
+                Utils.errMsg(lastResponseMessage);
+            }
+            return null;
+        }
+
+        String json = req.getInput();
+        // Http.physicalInfoList.clear();
+        if(json == null) {
+            return null;
+        } else {
+            System.out.println(json);
+            Gson gson = new Gson();
+            PhysicalInformations obj = gson.fromJson(json,
+                net.kenevans.polar.accessmanager.classes.PhysicalInformations.class);
+            if(obj != null) {
+                List<String> physicalInfoList = obj.physicalInformations;
+                if(physicalInfoList == null || physicalInfoList.isEmpty()) {
+                    System.out.println("No physical informations");
+                } else {
+                    for(String physicalInfo : physicalInfoList) {
+                        // Http.physicalInfoList.add(physicalInfo);
+                        System.out.println(physicalInfo);
                     }
                 }
             }
@@ -768,6 +1133,109 @@ public class Http implements IConstants
             Gson gson = new Gson();
             Exercise obj = gson.fromJson(json,
                 net.kenevans.polar.accessmanager.classes.Exercise.class);
+            if(obj != null) {
+            }
+            return obj;
+        }
+    }
+
+    public Activity getActivitySummary(String url, boolean popup) {
+        lastResponseMessage = "";
+        if(getToken() == null) {
+            lastResponseMessage = "No token";
+            if(popup) {
+                Utils.errMsg(lastResponseMessage);
+            }
+            return null;
+        }
+        if(url == null) {
+            lastResponseMessage = "No url given";
+            if(popup) {
+                Utils.errMsg(lastResponseMessage);
+            }
+            return null;
+        }
+        Request req = new Request(Request.Method.GET, url);
+        if(debug) {
+            System.out.println("*** " + req.url);
+        }
+        req.setAuthorization(Request.AuthMode.BEARER, getToken());
+        req.setRequestProperty("Accept", "application/json");
+
+        int responseCode = lastResponseCode = req.getResponseCode();
+        if(responseCode != HttpURLConnection.HTTP_OK) {
+            lastResponseMessage = "getctivitySummary: "
+                + getLastResponseCodeString();
+            String error = req.getError();
+            if(error != null) {
+                lastResponseMessage += LS + wordWrap(error, 80);
+            }
+            if(popup) {
+                Utils.errMsg(lastResponseMessage);
+            }
+            return null;
+        }
+
+        String json = req.getInput();
+        if(json == null) {
+            return null;
+        } else {
+            System.out.println(json);
+            Gson gson = new Gson();
+            Activity obj = gson.fromJson(json,
+                net.kenevans.polar.accessmanager.classes.Activity.class);
+            if(obj != null) {
+            }
+            return obj;
+        }
+    }
+
+    public PhysicalInformation getPhysicalInfoSummary(String url,
+        boolean popup) {
+        lastResponseMessage = "";
+        if(getToken() == null) {
+            lastResponseMessage = "No token";
+            if(popup) {
+                Utils.errMsg(lastResponseMessage);
+            }
+            return null;
+        }
+        if(url == null) {
+            lastResponseMessage = "No url given";
+            if(popup) {
+                Utils.errMsg(lastResponseMessage);
+            }
+            return null;
+        }
+        Request req = new Request(Request.Method.GET, url);
+        if(debug) {
+            System.out.println("*** " + req.url);
+        }
+        req.setAuthorization(Request.AuthMode.BEARER, getToken());
+        req.setRequestProperty("Accept", "application/json");
+
+        int responseCode = lastResponseCode = req.getResponseCode();
+        if(responseCode != HttpURLConnection.HTTP_OK) {
+            lastResponseMessage = "getExerciseSummary: "
+                + getLastResponseCodeString();
+            String error = req.getError();
+            if(error != null) {
+                lastResponseMessage += LS + wordWrap(error, 80);
+            }
+            if(popup) {
+                Utils.errMsg(lastResponseMessage);
+            }
+            return null;
+        }
+
+        String json = req.getInput();
+        if(json == null) {
+            return null;
+        } else {
+            System.out.println(json);
+            Gson gson = new Gson();
+            PhysicalInformation obj = gson.fromJson(json,
+                net.kenevans.polar.accessmanager.classes.PhysicalInformation.class);
             if(obj != null) {
             }
             return obj;

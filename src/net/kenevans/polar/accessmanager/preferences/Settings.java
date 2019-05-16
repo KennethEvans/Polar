@@ -17,6 +17,8 @@ public class Settings implements IConstants
     private String clientUserId = D_CLIENT_USER_ID;
     private String polarUserId = D_CLIENT_USER_ID;
     private Integer exerciseTransactionId = D_EXERCISE_TRANSACTION_ID;
+    private Integer activityTransactionId = D_ACTIVITY_TRANSACTION_ID;
+    private Integer physicalInfoTransactionId = D_PHYSICAL_INFO_TRANSACTION_ID;
     private String initialTcxGpxSrcDir = D_MERGE_TCX_AND_GPX_TO_GPX_SRC_DIR;
     private String initialTcxGpxDestDir = D_MERGE_TCX_AND_GPX_TO_GPX_DEST_DIR;
     private String tcxGpxDownloadDir = D_TCX_GPX_DOWNLOAD_DIR;
@@ -38,6 +40,10 @@ public class Settings implements IConstants
         polarUserId = prefs.get(P_POLAR_USER_ID, D_POLAR_USER_ID);
         exerciseTransactionId = prefs.getInt(P_EXERCISE_TRANSACTION_ID,
             D_EXERCISE_TRANSACTION_ID);
+        activityTransactionId = prefs.getInt(P_ACTIVITY_TRANSACTION_ID,
+            D_ACTIVITY_TRANSACTION_ID);
+        physicalInfoTransactionId = prefs.getInt(P_PHYSICAL_INFO_TRANSACTION_ID,
+            D_PHYSICAL_INFO_TRANSACTION_ID);
         initialTcxGpxSrcDir = prefs.get(P_MERGE_TCX_AND_GPX_TO_GPX_SRC_DIR,
             D_MERGE_TCX_AND_GPX_TO_GPX_SRC_DIR);
         initialTcxGpxDestDir = prefs.get(P_MERGE_TCX_AND_GPX_TO_GPX_DEST_DIR,
@@ -72,6 +78,8 @@ public class Settings implements IConstants
             prefs.put(P_CLIENT_USER_ID, clientUserId);
             prefs.put(P_POLAR_USER_ID, polarUserId);
             prefs.putInt(P_EXERCISE_TRANSACTION_ID, exerciseTransactionId);
+            prefs.putInt(P_ACTIVITY_TRANSACTION_ID, activityTransactionId);
+            prefs.putInt(P_PHYSICAL_INFO_TRANSACTION_ID, physicalInfoTransactionId);
             prefs.put(P_MERGE_TCX_AND_GPX_TO_GPX_SRC_DIR, initialTcxGpxSrcDir);
             prefs.put(P_MERGE_TCX_AND_GPX_TO_GPX_DEST_DIR,
                 initialTcxGpxDestDir);
@@ -168,6 +176,8 @@ public class Settings implements IConstants
         this.clientUserId = settings.clientUserId;
         this.polarUserId = settings.polarUserId;
         this.exerciseTransactionId = settings.exerciseTransactionId;
+        this.activityTransactionId = settings.activityTransactionId;
+        this.physicalInfoTransactionId = settings.physicalInfoTransactionId;
         this.initialTcxGpxSrcDir = settings.initialTcxGpxSrcDir;
         this.initialTcxGpxDestDir = settings.initialTcxGpxDestDir;
         this.tcxGpxDownloadDir = settings.tcxGpxDownloadDir;
@@ -259,10 +269,38 @@ public class Settings implements IConstants
     }
 
     /**
+     * @return The value of activityTransactionId.
+     */
+    public Integer getActivityTransactionId() {
+        return activityTransactionId;
+    }
+
+    /**
+     * @return The value of exerciseTransactionId.
+     */
+    public Integer getPhysicalInfoTransactionId() {
+        return physicalInfoTransactionId;
+    }
+
+    /**
      * @param exerciseTransactionId The new value for exerciseTransactionId.
      */
     public void setExerciseTransactionId(Integer exerciseTransactionId) {
         this.exerciseTransactionId = exerciseTransactionId;
+    }
+
+    /**
+     * @param activityTransactionId The new value for activityTransactionId.
+     */
+    public void setActivityTransactionId(Integer activityTransactionId) {
+        this.activityTransactionId = activityTransactionId;
+    }
+
+    /**
+     * @param physicalInfoTransactionId The new value for physicalInfoTransactionId.
+     */
+    public void setPhysicalInfoTransactionId(Integer physicalInfoTransactionId) {
+        this.physicalInfoTransactionId = physicalInfoTransactionId;
     }
 
     /**
@@ -272,6 +310,24 @@ public class Settings implements IConstants
         this.exerciseTransactionId = exerciseTransactionId;
         Preferences prefs = Preferences.userRoot().node(P_PREFERENCE_NODE);
         prefs.putInt(P_EXERCISE_TRANSACTION_ID, exerciseTransactionId);
+    }
+
+    /**
+     * @param activityTransactionId The new value for activityTransactionId.
+     */
+    public void saveActivityTransactionId(Integer activityTransactionId) {
+        this.activityTransactionId = activityTransactionId;
+        Preferences prefs = Preferences.userRoot().node(P_PREFERENCE_NODE);
+        prefs.putInt(P_ACTIVITY_TRANSACTION_ID, exerciseTransactionId);
+    }
+
+    /**
+     * @param physicalInfoTransactionId The new value for physicalInfoTransactionId.
+     */
+    public void savePhysicalInfoTransactionId(Integer physicalInfoTransactionId) {
+        this.physicalInfoTransactionId = physicalInfoTransactionId;
+        Preferences prefs = Preferences.userRoot().node(P_PREFERENCE_NODE);
+        prefs.putInt(P_PHYSICAL_INFO_TRANSACTION_ID, physicalInfoTransactionId);
     }
 
     /**

@@ -57,6 +57,8 @@ public class PreferencesDialog extends JDialog implements IConstants
     JTextField clientUserIdText;
     JTextField polarUserIdText;
     JTextField exerciseTransactionIdText;
+    JTextField activityTransactionIdText;
+    JTextField physicalInfoTransactionIdText;
 
     JTextField initialTcxGpxSrcDirText;
     JTextField initialTcxGpxDestDirText;
@@ -553,10 +555,10 @@ public class PreferencesDialog extends JDialog implements IConstants
         gbc.weightx = 100;
         nonConfigurationGroup.add(tokenText, gbc);
 
-        // Transaction-id
-        label = new JLabel("transaction-id:");
+        // Exercise transaction-id
+        label = new JLabel("exercise-transaction-id:");
         label.setToolTipText(
-            "transaction-id return from Polar Access.  It has a 10 minute lifetime.");
+            "exercise-transaction-id returned from Polar Access.  It has a 10 minute lifetime.");
         gbc = (GridBagConstraints)gbcDefault.clone();
         gbc.gridx = 0;
         nonConfigurationGroup.add(label, gbc);
@@ -568,6 +570,38 @@ public class PreferencesDialog extends JDialog implements IConstants
         // gbc.fill = GridBagConstraints.HORIZONTAL;
         gbc.weightx = 100;
         nonConfigurationGroup.add(exerciseTransactionIdText, gbc);
+
+        // Activity transaction-id
+        label = new JLabel("activity-transaction-id:");
+        label.setToolTipText(
+            "activity-transaction-id returned from Polar Access.  It has a 10 minute lifetime.");
+        gbc = (GridBagConstraints)gbcDefault.clone();
+        gbc.gridx = 0;
+        nonConfigurationGroup.add(label, gbc);
+
+        activityTransactionIdText = new JTextField(30);
+        activityTransactionIdText.setToolTipText(label.getToolTipText());
+        gbc = (GridBagConstraints)gbcDefault.clone();
+        gbc.gridx = 1;
+        // gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.weightx = 100;
+        nonConfigurationGroup.add(activityTransactionIdText, gbc);
+
+        // Physical info transaction-id
+        label = new JLabel("physical-information-transaction-id:");
+        label.setToolTipText(
+            "transaction-id returned from Polar Access.  It has a 10 minute lifetime.");
+        gbc = (GridBagConstraints)gbcDefault.clone();
+        gbc.gridx = 0;
+        nonConfigurationGroup.add(label, gbc);
+
+        physicalInfoTransactionIdText = new JTextField(30);
+        physicalInfoTransactionIdText.setToolTipText(label.getToolTipText());
+        gbc = (GridBagConstraints)gbcDefault.clone();
+        gbc.gridx = 1;
+        // gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.weightx = 100;
+        nonConfigurationGroup.add(physicalInfoTransactionIdText, gbc);
 
         // // Dummy Group
         // JPanel dummyGroup = new JPanel();
@@ -782,6 +816,14 @@ public class PreferencesDialog extends JDialog implements IConstants
             exerciseTransactionIdText
                 .setText(Integer.toString(settings.getExerciseTransactionId()));
         }
+        if(activityTransactionIdText != null) {
+            activityTransactionIdText
+                .setText(Integer.toString(settings.getActivityTransactionId()));
+        }
+        if(physicalInfoTransactionIdText != null) {
+            physicalInfoTransactionIdText.setText(
+                Integer.toString(settings.getPhysicalInfoTransactionId()));
+        }
         if(initialTcxGpxSrcDirText != null) {
             initialTcxGpxSrcDirText.setText(settings.getInitialTcxGpxSrcDir());
         }
@@ -832,6 +874,10 @@ public class PreferencesDialog extends JDialog implements IConstants
             settings.setPolarUserId(polarUserIdText.getText());
             settings.setExerciseTransactionId(
                 Integer.parseInt(exerciseTransactionIdText.getText()));
+            settings.setActivityTransactionId(
+                Integer.parseInt(activityTransactionIdText.getText()));
+            settings.setPhysicalInfoTransactionId(
+                Integer.parseInt(physicalInfoTransactionIdText.getText()));
             settings.setInitialTcxGpxSrcDir(initialTcxGpxSrcDirText.getText());
             settings
                 .setInitialTcxGpxDestDir(initialTcxGpxDestDirText.getText());

@@ -51,8 +51,16 @@ public interface IConstants
     public static final String D_POLAR_USER_ID = "";
     /*** The preference name for the exercise transaction_id. */
     public static final String P_EXERCISE_TRANSACTION_ID = "exercise_Transaction_id";
+    /*** The preference name for the activity transaction_id. */
+    public static final String P_ACTIVITY_TRANSACTION_ID = "activity_Transaction_id";
+    /*** The preference name for the physical info transaction_id. */
+    public static final String P_PHYSICAL_INFO_TRANSACTION_ID = "physical_info_Transaction_id";
     /*** The default value for the exercise transaction_id. */
     public static final int D_EXERCISE_TRANSACTION_ID = -1;
+    /*** The default value for the activity transaction_id. */
+    public static final int D_ACTIVITY_TRANSACTION_ID = -1;
+    /*** The default value for the physical info transaction_id. */
+    public static final int D_PHYSICAL_INFO_TRANSACTION_ID = -1;
     /*** The preference name for file name substitution (a JSON string). */
     public static final String P_FILENAME_SUBSTITUTION = "fileNameSubstitution";
     /*** The default value for file name substitution. */
