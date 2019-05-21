@@ -107,7 +107,7 @@ public class Http implements IConstants
     }
 
     /**
-     * @return The value of physicalInfoTransactionId().
+     * @return The value of getExerciseTransactionId().
      */
     public Integer getExerciseTransactionId() {
         return manager.getSettings().getExerciseTransactionId();
@@ -550,9 +550,9 @@ public class Http implements IConstants
     }
 
     /**
-     * Get available physicalInfo. Does not return a valid JSONObject. Returns a
-     * JSON list of something similar to physicalInfo, with some differences.
-     * This may be undocumented, hence a mistake.
+     * Get available exercise. Does not return a valid JSONObject. Returns a
+     * JSON list of something similar to exercise, with some differences. This
+     * may be undocumented, hence a mistake.
      * 
      * @return
      */
@@ -566,7 +566,7 @@ public class Http implements IConstants
             return null;
         }
         Request req = new Request(Request.Method.GET,
-            ACCESS_LINK_URL + "physicalInfos");
+            ACCESS_LINK_URL + "exercises");
         req.setAuthorization(Request.AuthMode.BEARER, getToken());
         req.setRequestProperty("Accept", "application/json");
 
@@ -589,7 +589,7 @@ public class Http implements IConstants
             return null;
         } else {
             // This is not a JSON element as returned, make one
-            json = "{\"physicalInfos-hash\" :" + json + "}";
+            json = "{\"exercises-hash\" :" + json + "}";
             System.out.println(json);
             Gson gson = new Gson();
             ExercisesHash obj = gson.fromJson(json,
@@ -608,7 +608,7 @@ public class Http implements IConstants
             return null;
         }
         Request req = new Request(Request.Method.POST, ACCESS_LINK_URL
-            + "users/" + getPolarUserId() + "/physicalInfo-transactions");
+            + "users/" + getPolarUserId() + "/exercise-transactions");
         if(debug) {
             System.out.println("*** " + req.url);
         }
@@ -638,11 +638,10 @@ public class Http implements IConstants
             TransactionLocation obj = gson.fromJson(json,
                 net.kenevans.polar.accessmanager.classes.TransactionLocation.class);
             if(obj != null) {
-                int physicalInfoTransactionId = obj.transactionId;
+                int exerciseTransactionId = obj.transactionId;
                 manager.getSettings()
-                    .saveExerciseTransactionId(physicalInfoTransactionId);
-                System.out
-                    .println("transaction_id=" + physicalInfoTransactionId);
+                    .saveExerciseTransactionId(exerciseTransactionId);
+                System.out.println("transaction_id=" + exerciseTransactionId);
                 String resourceUri = obj.resourceUri;
                 System.out.println("resourceUri=" + resourceUri);
             }
@@ -765,7 +764,7 @@ public class Http implements IConstants
             return false;
         }
         if(getExerciseTransactionId() < 0) {
-            lastResponseMessage = "No physicalInfoTransactionId";
+            lastResponseMessage = "No getExerciseTransactionId";
             if(popup) {
                 Utils.errMsg(lastResponseMessage);
             }
@@ -781,7 +780,7 @@ public class Http implements IConstants
         }
         Request req = new Request(Request.Method.PUT,
             ACCESS_LINK_URL + "users/" + getPolarUserId()
-                + "/physicalInfo-transactions/" + getExerciseTransactionId());
+                + "/exercise-transactions/" + getExerciseTransactionId());
         if(debug) {
             System.out.println("*** " + req.url);
         }
@@ -789,7 +788,7 @@ public class Http implements IConstants
 
         int responseCode = lastResponseCode = req.getResponseCode();
         if(responseCode != HttpURLConnection.HTTP_OK) {
-            lastResponseMessage = "commitTransaction Failed: "
+            lastResponseMessage = "commitExerciseTransaction Failed: "
                 + getLastResponseCodeString();
             String error = req.getError();
             if(error != null) {
@@ -838,7 +837,7 @@ public class Http implements IConstants
 
         int responseCode = lastResponseCode = req.getResponseCode();
         if(responseCode != HttpURLConnection.HTTP_OK) {
-            lastResponseMessage = "commitTransaction Failed: "
+            lastResponseMessage = "commitActivityTransaction Failed: "
                 + getLastResponseCodeString();
             String error = req.getError();
             if(error != null) {
@@ -888,7 +887,7 @@ public class Http implements IConstants
 
         int responseCode = lastResponseCode = req.getResponseCode();
         if(responseCode != HttpURLConnection.HTTP_OK) {
-            lastResponseMessage = "commitTransaction Failed: "
+            lastResponseMessage = "commitPhysicalInfoTransaction Failed: "
                 + getLastResponseCodeString();
             String error = req.getError();
             if(error != null) {
@@ -921,7 +920,7 @@ public class Http implements IConstants
         }
         Request req = new Request(Request.Method.GET,
             ACCESS_LINK_URL + "users/" + getPolarUserId()
-                + "/physicalInfo-transactions/" + getExerciseTransactionId());
+                + "/exercise-transactions/" + getExerciseTransactionId());
         if(debug) {
             System.out.println("*** " + req.url);
         }
@@ -955,7 +954,7 @@ public class Http implements IConstants
                     System.out.println("No exercises");
                 } else {
                     for(String exercise : exercisesList) {
-                        // Http.physicalInfoList.add(physicalInfo);
+                        // Http.exerciseList.add(exercise);
                         System.out.println(exercise);
                     }
                 }
