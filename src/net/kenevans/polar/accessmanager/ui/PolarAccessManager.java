@@ -11,17 +11,15 @@ import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
-import java.io.FileWriter;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -737,49 +735,7 @@ public class PolarAccessManager extends JFrame
         menuItem.setText("Show Overview in Browser...");
         menuItem.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent ae) {
-                // Make a temp file, necessary when the resource is in a JAR
-                File temp = null;
-                try {
-                    temp = File.createTempFile("PolarAccessManager", ".html");
-                    temp.deleteOnExit();
-                } catch(IOException ex) {
-                    Utils.excMsg(
-                        "Error creating temp file for displaying PolarAccessManager.htm",
-                        ex);
-                    return;
-                }
-                // Write the file from an InputStream to the resource
-                // Cannot get the file, but can get a stream to it.
-                InputStream in = null;
-                BufferedReader reader = null;
-                PrintWriter out = null;
-                try {
-                    in = getClass().getResourceAsStream(
-                        "/resources/PolarAccessManager.htm");
-                    reader = new BufferedReader(new InputStreamReader(in));
-                    out = new PrintWriter(new FileWriter(temp));
-                    String line;
-                    while((line = reader.readLine()) != null) {
-                        out.println(line);
-                    }
-                    in.close();
-                    in = null;
-                    reader.close();
-                    reader = null;
-                    out.close();
-                    out = null;
-                    Desktop.getDesktop().browse(temp.toURI());
-                } catch(Exception ex) {
-                    Utils.excMsg("Error processing PolarAccessManager.htm", ex);
-                } finally {
-                    try {
-                        if(in != null) in.close();
-                        if(reader != null) reader.close();
-                        if(out != null) out.close();
-                    } catch(IOException ex) {
-                        // Do nothing
-                    }
-                }
+                showHelpInBrowser();
             }
         });
         menu.add(menuItem);
@@ -985,6 +941,64 @@ public class PolarAccessManager extends JFrame
     private void quit() {
         settings.saveToPreferences(true);
         System.exit(0);
+    }
+
+    /**
+     * Shows the help file in a browser. Reads the necessary files from the
+     * resources, assuming they may be in a JAR, to a temporary directory, then
+     * brings up the default browser.
+     */
+    private void showHelpInBrowser() {
+        // Make a temp directory
+        Path tempPath = null;
+        try {
+            tempPath = Files.createTempDirectory("PolarAccessManager");
+        } catch(IOException ex) {
+            // TODO Auto-generated catch block
+            Utils.excMsg(
+                "Error creating temp directory for displaying PolarAccessManager.htm",
+                ex);
+            return;
+        }
+        if(tempPath == null) {
+            Utils.errMsg(
+                "Error creating temp directory for displaying PolarAccessManager.htm");
+
+        }
+        tempPath.toFile().deleteOnExit();
+
+        // Copy the HTML files to the tempDir
+        File overviewFile = new File(tempPath.toFile(),
+            "PolarAccessManager.htm");
+        overviewFile.deleteOnExit();
+        try {
+            Utils.exportResource(this.getClass(),
+                "/resources/PolarAccessManager.htm", overviewFile);
+        } catch(Exception ex) {
+            Utils.excMsg("Error creating temp file for PolarAccessManager.htm",
+                ex);
+            return;
+        }
+        File imageFile = new File(tempPath.toFile(),
+            "PolarAccessManager.32x32.png");
+        imageFile.deleteOnExit();
+        try {
+            Utils.exportResource(this.getClass(),
+                "/resources/PolarAccessManager.32x32.png", imageFile);
+        } catch(Exception ex) {
+            Utils.excMsg(
+                "Error creating temp file for PolarAccessManager.32x32.png",
+                ex);
+            return;
+        }
+
+        try {
+            Desktop.getDesktop().browse(overviewFile.toURI());
+        } catch(IOException ex) {
+            Utils.excMsg("Error starting browser for PolarAccessManager.htm",
+                ex);
+            return;
+        }
     }
 
     public void prettyPrint() {

@@ -7,7 +7,10 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
@@ -305,6 +308,39 @@ public class Utils
         // Has to be done after set size
         dialog.setLocationRelativeTo(parent);
         dialog.setVisible(true);
+    }
+
+    /**
+     * Copies a file from a resource, possible in a JAR, to the given File.
+     * 
+     * @param cls The class that has the resource, e.g. MyClass.toClass().
+     * @param resourceName The name of the resource.
+     * @param file The file to write.
+     * @throws Exception
+     */
+    public static void exportResource(Class<?> cls, String resourceName,
+        File file) throws Exception {
+        InputStream stream = null;
+        OutputStream out = null;
+        try {
+            stream = cls.getResourceAsStream(resourceName);
+            if(stream == null) {
+                throw new Exception("Cannot get resource \"" + resourceName
+                    + "\" from Jar file.");
+            }
+
+            int readBytes;
+            byte[] buffer = new byte[4096];
+            out = new FileOutputStream(file);
+            while((readBytes = stream.read(buffer)) > 0) {
+                out.write(buffer, 0, readBytes);
+            }
+        } catch(Exception ex) {
+            throw ex;
+        } finally {
+            stream.close();
+            out.close();
+        }
     }
 
 }
