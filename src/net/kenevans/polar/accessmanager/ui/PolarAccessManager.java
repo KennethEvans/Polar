@@ -1,6 +1,7 @@
 package net.kenevans.polar.accessmanager.ui;
 
 import java.awt.BorderLayout;
+import java.awt.Desktop;
 import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.Toolkit;
@@ -10,10 +11,14 @@ import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.FileWriter;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.HttpURLConnection;
 import java.net.URL;
@@ -729,6 +734,57 @@ public class PolarAccessManager extends JFrame
         menu.add(menuItem);
 
         menuItem = new JMenuItem();
+        menuItem.setText("Show Overview in Browser...");
+        menuItem.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent ae) {
+                // Make a temp file, necessary when the resource is in a JAR
+                File temp = null;
+                try {
+                    temp = File.createTempFile("PolarAccessManager", ".html");
+                    temp.deleteOnExit();
+                } catch(IOException ex) {
+                    Utils.excMsg(
+                        "Error creating temp file for displaying PolarAccessManager.htm",
+                        ex);
+                    return;
+                }
+                // Write the file from an InputStream to the resource
+                // Cannot get the file, but can get a stream to it.
+                InputStream in = null;
+                BufferedReader reader = null;
+                PrintWriter out = null;
+                try {
+                    in = getClass().getResourceAsStream(
+                        "/resources/PolarAccessManager.htm");
+                    reader = new BufferedReader(new InputStreamReader(in));
+                    out = new PrintWriter(new FileWriter(temp));
+                    String line;
+                    while((line = reader.readLine()) != null) {
+                        out.println(line);
+                    }
+                    in.close();
+                    in = null;
+                    reader.close();
+                    reader = null;
+                    out.close();
+                    out = null;
+                    Desktop.getDesktop().browse(temp.toURI());
+                } catch(Exception ex) {
+                    Utils.excMsg("Error processing PolarAccessManager.htm", ex);
+                } finally {
+                    try {
+                        if(in != null) in.close();
+                        if(reader != null) reader.close();
+                        if(out != null) out.close();
+                    } catch(IOException ex) {
+                        // Do nothing
+                    }
+                }
+            }
+        });
+        menu.add(menuItem);
+
+        menuItem = new JMenuItem();
         menuItem.setText("About");
         menuItem.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent ae) {
@@ -1016,7 +1072,7 @@ public class PolarAccessManager extends JFrame
     }
 
     /**
-     * Generate a filename using the current client-user-name and the supplied
+     * Generate a filename using the current client-user-id and the supplied
      * startTime, activity string, and extension. The activity should be space
      * or underscore-separated words (usually a location). The extension should
      * start with dot.
@@ -1164,6 +1220,10 @@ public class PolarAccessManager extends JFrame
         return Result.FAIL;
     }
 
+    /**
+     * Use to start a browser to get the user authorization. The response will
+     * come through a PropertyChange event.
+     */
     private void getAccess() {
         appendLineText(LS + "getAccess");
         String accessUrl = http.getAuthorizationURL();
