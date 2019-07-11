@@ -1,6 +1,7 @@
 package net.kenevans.polar.accessmanager.ui;
 
 import java.awt.BorderLayout;
+import java.awt.Cursor;
 import java.awt.Desktop;
 import java.awt.Dimension;
 import java.awt.Font;
@@ -25,6 +26,7 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ExecutionException;
 
 import javax.swing.ImageIcon;
 import javax.swing.JFileChooser;
@@ -37,6 +39,7 @@ import javax.swing.JScrollPane;
 import javax.swing.JSeparator;
 import javax.swing.JTextArea;
 import javax.swing.SwingUtilities;
+import javax.swing.SwingWorker;
 import javax.swing.UIManager;
 import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.xml.bind.JAXBException;
@@ -76,11 +79,15 @@ import net.kenevans.trainingcenterdatabasev2.TrainingCenterDatabaseT;
 import net.kenevans.trainingcenterdatabasev2.parser.TCXParser;
 
 public class PolarAccessManager extends JFrame
-    implements IConstants, PropertyChangeListener
+    implements IConstants, PropertyChangeListener, IWorkerMethod
 {
+    enum BackgroundMethodType {
+        GetTcxGpx, GetExerciseSummaries, GetActivitySummaries, GetPhysicalInfoSummaries,
+    }
+
     public static final String LS = System.getProperty("line.separator");
     private static final String NAME = "Polar Access Manager";
-    private static final String VERSION = "1.2.0";
+    private static final String VERSION = "1.2.1";
     private static final String HELP_TITLE = NAME + " " + VERSION;
     private static final String AUTHOR = "Written by Kenneth Evans, Jr.";
     private static final String COPYRIGHT = "Copyright (c) 2019 Kenneth Evans";
@@ -437,7 +444,11 @@ public class PolarAccessManager extends JFrame
         menuItem.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent ae) {
                 appendLineText(LS + "getExerciseSummaries");
-                getExerciseSummaries();
+                BackgroundWorker worker = new BackgroundWorker(
+                    PolarAccessManager.this,
+                    PolarAccessManager.BackgroundMethodType.GetExerciseSummaries,
+                    PolarAccessManager.this);
+                worker.execute();
             }
         });
         menu.add(menuItem);
@@ -448,7 +459,11 @@ public class PolarAccessManager extends JFrame
         menuItem.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent ae) {
                 appendLineText(LS + "getTcxGpx");
-                getTpxGpx();
+                BackgroundWorker worker = new BackgroundWorker(
+                    PolarAccessManager.this,
+                    PolarAccessManager.BackgroundMethodType.GetTcxGpx,
+                    PolarAccessManager.this);
+                worker.execute();
                 return;
             }
         });
@@ -539,7 +554,12 @@ public class PolarAccessManager extends JFrame
         menuItem.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent ae) {
                 appendLineText(LS + "getActivitySummaries");
-                getActivitySummaries();
+                BackgroundWorker worker = new BackgroundWorker(
+                    PolarAccessManager.this,
+                    PolarAccessManager.BackgroundMethodType.GetActivitySummaries,
+                    PolarAccessManager.this);
+                worker.execute();
+                return;
             }
         });
         menu.add(menuItem);
@@ -629,7 +649,11 @@ public class PolarAccessManager extends JFrame
         menuItem.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent ae) {
                 appendLineText(LS + "getPhysicalInfoSummaries");
-                getPhysicalInfoSummaries();
+                BackgroundWorker worker = new BackgroundWorker(
+                    PolarAccessManager.this,
+                    PolarAccessManager.BackgroundMethodType.GetPhysicalInfoSummaries,
+                    PolarAccessManager.this);
+                worker.execute();
             }
         });
         menu.add(menuItem);
@@ -1649,6 +1673,26 @@ public class PolarAccessManager extends JFrame
             + " (Refers to TCX/GPX pairs)");
     }
 
+    @Override
+    public void work(BackgroundMethodType type) {
+        switch(type) {
+        case GetTcxGpx:
+            getTpxGpx();
+            break;
+        case GetExerciseSummaries:
+            getExerciseSummaries();
+            break;
+        case GetActivitySummaries:
+            getActivitySummaries();
+            break;
+        case GetPhysicalInfoSummaries:
+            getPhysicalInfoSummaries();
+            break;
+        default:
+            Utils.errMsg("Invalid type (" + type.name() + ") for work method");
+        }
+    }
+
     /**
      * @param args
      */
@@ -1673,6 +1717,59 @@ public class PolarAccessManager extends JFrame
                 }
             }
         });
+    }
+
+    /**
+     * BackgroundWorker is a class to run a type in the background and display a
+     * wait cursor.
+     * 
+     * @author Kenneth Evans, Jr.
+     */
+    private class BackgroundWorker extends SwingWorker<Void, Void>
+    {
+        private final JFrame frame;
+        private BackgroundMethodType type;
+        private IWorkerMethod workMethod;
+
+        /**
+         * BackgroundWorker constructor. Designed to call an arbitrary type with
+         * no parameters in PolarAccessmanager and run it in the background. The
+         * particular type to run is implemented via a switch statement in the
+         * work(BackgroundMethodType type). This allows using the same mechanism
+         * for various long running type calls.
+         * 
+         * @param frame The JFrame, typically {PolarAccessManager.this.
+         * @param type The BackgroundMethodType to use in the workMethod.
+         * @param workMethod The IWorkerMethod interface implementing the work
+         *            type, typically {PolarAccessManager.this.
+         */
+        public BackgroundWorker(JFrame frame, BackgroundMethodType method,
+            IWorkerMethod workMethod) {
+            frame.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+            this.frame = frame;
+            this.type = method;
+            this.workMethod = workMethod;
+        }
+
+        @Override
+        public Void doInBackground() throws IOException {
+            workMethod.work(type);
+            return null;
+        }
+
+        @Override
+        public void done() {
+            try {
+                get();
+            } catch(ExecutionException ex) {
+                Utils.excMsg("Execution error for " + type.name(), ex);
+            } catch(InterruptedException ex) {
+                Utils.excMsg("Interrupted " + type.name(), ex);
+            } finally {
+                frame.setCursor(Cursor.getDefaultCursor());
+            }
+        }
+
     }
 
 }
