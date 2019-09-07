@@ -1665,12 +1665,12 @@ public class PolarAccessManager extends JFrame
                 }
             }
         }
-        appendLineText(
-            "Written: " + nWritten + " Failed: " + nFailed + " Empty: " + nEmpty
-                + " Skipped: " + nSkipped + " Aborted: " + nAborted);
-        appendLineText("Rename: Successful: " + nRenameSuccessful + " Aborted: "
-            + nRenameAborted + " Failed: " + nRenameFailed
-            + " (Refers to TCX/GPX pairs)");
+        appendLineText("Summary: " + nWritten + " Written, " + nFailed
+            + " Failed, " + nEmpty + " Empty, " + nSkipped + " Skipped, "
+            + nAborted + " Aborted");
+        appendLineText("Rename Summary: " + nRenameSuccessful + " Successful, "
+            + nRenameAborted + " Aborted, " + nRenameFailed
+            + " Failed (Refers to TCX/GPX pairs)");
     }
 
     @Override
