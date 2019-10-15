@@ -87,7 +87,7 @@ public class PolarAccessManager extends JFrame
 
     public static final String LS = System.getProperty("line.separator");
     private static final String NAME = "Polar Access Manager";
-    private static final String VERSION = "1.2.1";
+    private static final String VERSION = "1.2.2";
     private static final String HELP_TITLE = NAME + " " + VERSION;
     private static final String AUTHOR = "Written by Kenneth Evans, Jr.";
     private static final String COPYRIGHT = "Copyright (c) 2019 Kenneth Evans";
@@ -100,7 +100,7 @@ public class PolarAccessManager extends JFrame
     private static final long serialVersionUID = 1L;
 
     private static final String TITLE = NAME;
-    private static final int WIDTH = 600;
+    private static final int WIDTH = 700;
     private static final int HEIGHT = 600;
 
     private Http http;
