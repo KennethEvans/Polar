@@ -87,7 +87,7 @@ public class PolarAccessManager extends JFrame
 
     public static final String LS = System.getProperty("line.separator");
     private static final String NAME = "Polar Access Manager";
-    private static final String VERSION = "1.2.2";
+    private static final String VERSION = "2.0.0";
     private static final String HELP_TITLE = NAME + " " + VERSION;
     private static final String AUTHOR = "Written by Kenneth Evans, Jr.";
     private static final String COPYRIGHT = "Copyright (c) 2019 Kenneth Evans";
@@ -1269,8 +1269,12 @@ public class PolarAccessManager extends JFrame
             appendLineText("No access code");
             return;
         }
-        webPageDialog = new WebPageDialog(this, http.getAuthorizationURL());
-        webPageDialog.setVisible(true);
+        try {
+            webPageDialog = new WebPageDialog(this, http.getAuthorizationURL());
+            webPageDialog.setVisible(true);
+        } catch(Throwable t) {
+            Utils.excMsg("Error running getAccess", t);
+        }
     }
 
     private void getExerciseSummaries() {
