@@ -1,6 +1,5 @@
 package net.kenevans.polar.accessmanager.preferences;
 
-import java.awt.Component;
 import java.awt.Container;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
@@ -16,6 +15,7 @@ import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JDialog;
 import javax.swing.JFileChooser;
+import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JList;
 import javax.swing.JOptionPane;
@@ -73,8 +73,8 @@ public class PreferencesDialog extends JDialog implements IConstants
     /**
      * Constructor
      */
-    public PreferencesDialog(Component parent, PolarAccessManager viewer) {
-        super();
+    public PreferencesDialog(JFrame parent, PolarAccessManager viewer) {
+        super(parent);
         this.manager = viewer;
         if(viewer == null) {
             Utils.errMsg("Viewer is null");
