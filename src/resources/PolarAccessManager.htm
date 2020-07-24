@@ -54,8 +54,10 @@
 <p>Get a list of the URLs of the available exercises. You must get  a valid transaction ID first. This list is mostly valuable for debugging and understanding what is happening. </p>
 <p><strong>Get Exercise Summaries</strong></p>
 <p>Gets the exercise summaries. This option is self-contained and gets a transaction ID, then the list of exercises, and then  the actual exercises from the list. It does not commit the transaction. </p>
-<p><strong>Get TCX/GPX</strong></p>
-<p>In normal use this is the menu item used most. It gets the TCX and GPX files for the available exercises. It is also stand-alone and gets a transaction ID, then the files. It does not commit the transaction. There will be no GPX file if GPS was not used for the exercise. There are a number of options for overwriting and renaming these files during the processing, which you set in the Preferences. </p>
+<p><strong>Get TCX and Convert to GPX</strong></p>
+<p>In normal use this is the menu item used most. It gets the TCX  available exercises and generates a GPX file. It is stand-alone and gets a transaction ID, then the files. It does not commit the transaction. There are a number of options for overwriting and renaming these files during the processing, which you set in the Preferences. </p>
+<p><strong></strong><strong>!!! Get TCX and GPX</strong></p>
+<p>The !!! indicates to not use this item. It gets both the TCX and GPX files for the available exercises. The reason for the warning is that the GPX files from Polar Access have a number of problems: The times are not in UTC format as required by the GPX specification, and there is no heart rate data. It is also different from the GPX file you get if you download directly from Polar Flow. Use Get TCX and Convert to GPX, instead. This item is stand-alone and gets a transaction ID, then the files. It does not commit the transaction. There will be no GPX file if GPS was not used for the exercise. There are a number of options for overwriting and renaming these files during the processing, which you set in the Preferences. </p>
 <p><strong>Commit Exercise Transaction</strong></p>
 <p>This commits the transaction. Once committed the data will no longer be available in AccessLink ever. They expect you to commit the transaction, and doing so will keep you from processing the same items each time. Even if not committed, the data will no longer be available after about a month. See the AccessLink documentation for more and current information. </p>
 <h3>Activities</h3>

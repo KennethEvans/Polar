@@ -45,6 +45,27 @@ public class MergeTcxAndGpxToGpx implements IConstants
         getPreferences();
     }
 
+    public boolean convertTcxToGpx(File tcxFile, File gpxFile) {
+        TrainingCenterDatabaseT tcx;
+        try {
+            tcx = TCXParser.parse(tcxFile);
+        } catch(JAXBException ex) {
+            manager.appendLineText(
+                "Failed to parse " + tcxFile.getPath() + LS + ex.getMessage());
+            return false;
+        }
+        GpxType gpxNew = TCXParser.convertTCXtoGpx(tcx);
+        try {
+            GPXParser.save(MERGE_TCX_AND_GPX_TO_GPX_AUTHOR, gpxNew, gpxFile);
+            manager.appendLineText("Wrote " + gpxFile.getPath());
+        } catch(JAXBException ex) {
+            manager.appendLineText(
+                "Error writing " + gpxFile.getPath() + LS + ex.getMessage());
+            return false;
+        }
+        return true;
+    }
+
     public void processTcxFiles() {
         tcxGpxFiles.clear();
         File[] tcxFiles = getTcxFiles();
