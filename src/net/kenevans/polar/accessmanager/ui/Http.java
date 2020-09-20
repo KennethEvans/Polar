@@ -770,13 +770,15 @@ public class Http implements IConstants
             }
             return false;
         }
-        int result = JOptionPane.showConfirmDialog(null,
-            "Are you sure?" + LS
-                + "This will cause any existing data on Polar Access" + LS
-                + "to be removed forever." + LS + "OK to continue?",
-            " Confirmation", JOptionPane.OK_CANCEL_OPTION);
-        if(result != JOptionPane.OK_OPTION) {
-            return false;
+        if(PROMPT_FOR_COMMIT) {
+            int result = JOptionPane.showConfirmDialog(null,
+                "Are you sure?" + LS
+                    + "This will cause any existing data on Polar Access" + LS
+                    + "to be removed forever." + LS + "OK to continue?",
+                " Confirmation", JOptionPane.OK_CANCEL_OPTION);
+            if(result != JOptionPane.OK_OPTION) {
+                return false;
+            }
         }
         Request req = new Request(Request.Method.PUT,
             ACCESS_LINK_URL + "users/" + getPolarUserId()
@@ -819,13 +821,15 @@ public class Http implements IConstants
             }
             return false;
         }
-        int result = JOptionPane.showConfirmDialog(null,
-            "Are you sure?" + LS
-                + "This will cause any existing data on Polar Access" + LS
-                + "to be removed forever." + LS + "OK to continue?",
-            " Confirmation", JOptionPane.OK_CANCEL_OPTION);
-        if(result != JOptionPane.OK_OPTION) {
-            return false;
+        if(PROMPT_FOR_COMMIT) {
+            int result = JOptionPane.showConfirmDialog(null,
+                "Are you sure?" + LS
+                    + "This will cause any existing data on Polar Access" + LS
+                    + "to be removed forever." + LS + "OK to continue?",
+                " Confirmation", JOptionPane.OK_CANCEL_OPTION);
+            if(result != JOptionPane.OK_OPTION) {
+                return false;
+            }
         }
         Request req = new Request(Request.Method.PUT,
             ACCESS_LINK_URL + "users/" + getPolarUserId()
@@ -868,13 +872,15 @@ public class Http implements IConstants
             }
             return false;
         }
-        int result = JOptionPane.showConfirmDialog(null,
-            "Are you sure?" + LS
-                + "This will cause any existing data on Polar Access" + LS
-                + "to be removed forever." + LS + "OK to continue?",
-            " Confirmation", JOptionPane.OK_CANCEL_OPTION);
-        if(result != JOptionPane.OK_OPTION) {
-            return false;
+        if(PROMPT_FOR_COMMIT) {
+            int result = JOptionPane.showConfirmDialog(null,
+                "Are you sure?" + LS
+                    + "This will cause any existing data on Polar Access" + LS
+                    + "to be removed forever." + LS + "OK to continue?",
+                " Confirmation", JOptionPane.OK_CANCEL_OPTION);
+            if(result != JOptionPane.OK_OPTION) {
+                return false;
+            }
         }
         Request req = new Request(Request.Method.PUT,
             ACCESS_LINK_URL + "users/" + getPolarUserId()

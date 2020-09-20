@@ -26,6 +26,8 @@ public interface IConstants
 
     public int PRETTY_PRINT_INDENT = 2;
 
+    public boolean PROMPT_FOR_COMMIT = false;
+
     /***
      * The name of the preference node for accessing preferences for this
      * application. On Windows these are found in the registry under
@@ -98,6 +100,6 @@ public interface IConstants
     public static final String D_MERGE_TCX_AND_GPX_TO_GPX_DEST_DIR = "";
 
     public static final String MERGE_TCX_AND_GPX_TO_GPX_AUTHOR = "Polar Access Manager";
-      public static final String MERGE_TCX_AND_GPX_TO_GPX_EXT = ".conv.gpx";
+    public static final String MERGE_TCX_AND_GPX_TO_GPX_EXT = ".conv.gpx";
 
 }
