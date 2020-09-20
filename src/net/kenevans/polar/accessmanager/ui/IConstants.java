@@ -26,6 +26,10 @@ public interface IConstants
 
     public int PRETTY_PRINT_INDENT = 2;
 
+    /**
+     * Committing transactions makes them unavailable ever after. This field
+     * indicates whether to pop up a prompt saying this before committing.
+     */
     public boolean PROMPT_FOR_COMMIT = false;
 
     /***
