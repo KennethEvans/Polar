@@ -41,6 +41,7 @@ import net.kenevans.gpxtrackpointextensionv2.GpxType;
 import net.kenevans.gpxtrackpointextensionv2.MetadataType;
 import net.kenevans.gpxtrackpointextensionv2.TrkType;
 import net.kenevans.polar.utils.Utils;
+import net.kenevans.trainingcenterdatabasev2.AbstractSourceT;
 import net.kenevans.trainingcenterdatabasev2.ActivityListT;
 import net.kenevans.trainingcenterdatabasev2.ActivityT;
 import net.kenevans.trainingcenterdatabasev2.PlanT;
@@ -48,7 +49,6 @@ import net.kenevans.trainingcenterdatabasev2.SportT;
 import net.kenevans.trainingcenterdatabasev2.TrainingCenterDatabaseT;
 import net.kenevans.trainingcenterdatabasev2.TrainingT;
 import net.kenevans.trainingcenterdatabasev2.TrainingTypeT;
-import net.kenevans.trainingcenterdatabasev2.parser.TCXParser;
 
 /**
  * FileRenameDialog is a dialog to set the Preferences for PolarAccessManager. It only
@@ -686,10 +686,9 @@ public class FileRenameDialog extends JDialog implements IConstants
      */
     public MetaData getMetaData(TrainingCenterDatabaseT tcx) {
         MetaData metaData = new MetaData();
-        // Metadata
-        String desc = TCXParser.getMetadataDescriptionFromTcx(tcx);
-        if(desc != null) {
-            metaData.metadataDesc.add(desc);
+        AbstractSourceT author = tcx.getAuthor();
+        if(author != null && author.getName() != null) {
+            metaData.author = author.getName();
         }
 
         ActivityListT activities;
@@ -706,7 +705,6 @@ public class FileRenameDialog extends JDialog implements IConstants
         activityList = activities.getActivity();
         for(ActivityT activity : activityList) {
             sportName = "";
-            desc = "";
             planName = "";
             trainingTypeName = "";
             notes = "";
@@ -754,7 +752,11 @@ public class FileRenameDialog extends JDialog implements IConstants
         // Metadata
         metadata = gpx.getMetadata();
         if(metadata != null) {
-            metaData.metadataDesc.add(metadata.getDesc());
+            metaData.metadataDesc = metadata.getDesc();
+            if(metadata.getAuthor() != null
+                && metadata.getAuthor().getName() != null) {
+                metaData.author = metadata.getAuthor().getName();
+            }
         }
         trkList = gpx.getTrk();
         if(trkList != null) {
@@ -773,8 +775,13 @@ public class FileRenameDialog extends JDialog implements IConstants
             return null;
         }
         StringBuffer sb = new StringBuffer();
-        if(metaData.metadataDesc.isEmpty()) {
-            sb.append("metadataDesc: " + metaData.metadataDesc.get(0) + LS);
+        if(metaData.author != null && !metaData.author.isEmpty()) {
+            sb.append("Author: " + metaData.author + LS);
+        } else {
+            sb.append("Author: None" + LS);
+        }
+        if(metaData.metadataDesc != null && !metaData.metadataDesc.isEmpty()) {
+            sb.append("metadataDesc: " + metaData.metadataDesc + LS);
         } else {
             sb.append("metadataDesc: None" + LS);
         }
@@ -970,7 +977,8 @@ public class FileRenameDialog extends JDialog implements IConstants
             return result;
         }
         if(result == Result.ABORT) {
-            manager.appendLineText("Rename Aborted " + tcxNewNameText.getText());
+            manager
+                .appendLineText("Rename Aborted " + tcxNewNameText.getText());
             dispose();
             return result;
         }
@@ -992,12 +1000,14 @@ public class FileRenameDialog extends JDialog implements IConstants
             result = rename(gpxOldNameText, gpxNewNameText, gpxStatusText,
                 gpxFile);
             if(result == Result.FAIL) {
-                manager.appendLineText("Rename Failed " + gpxNewNameText.getText());
+                manager.appendLineText(
+                    "Rename Failed " + gpxNewNameText.getText());
                 dispose();
                 return result;
             }
             if(result == Result.ABORT) {
-                manager.appendLineText("Rename Aborted " + gpxNewNameText.getText());
+                manager.appendLineText(
+                    "Rename Aborted " + gpxNewNameText.getText());
                 dispose();
                 return result;
             }
@@ -1009,7 +1019,8 @@ public class FileRenameDialog extends JDialog implements IConstants
 
     public class MetaData
     {
-        public List<String> metadataDesc = new ArrayList<>();
+        public String author = "";
+        public String metadataDesc = "";
         public List<String> trackDesc = new ArrayList<>();
         public List<XMLGregorianCalendar> activityId = new ArrayList<>();
         public List<String> activitySport = new ArrayList<>();
