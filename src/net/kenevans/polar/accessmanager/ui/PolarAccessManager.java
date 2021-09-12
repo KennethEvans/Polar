@@ -87,7 +87,7 @@ public class PolarAccessManager extends JFrame
 
     public static final String LS = System.getProperty("line.separator");
     private static final String NAME = "Polar Access Manager";
-    private static final String VERSION = "2.3.0";
+    private static final String VERSION = "2.4.0";
     private static final String HELP_TITLE = NAME + " " + VERSION;
     private static final String AUTHOR = "Written by Kenneth Evans, Jr.";
     private static final String COPYRIGHT = "Copyright (c) 2019 Kenneth Evans";
@@ -96,6 +96,8 @@ public class PolarAccessManager extends JFrame
         "yyyy-MM-dd_HH-mm-ss");
     public static SimpleDateFormat startTimeFormat = new SimpleDateFormat(
         "yyyy-MM-dd'T'HH:mm:ss.SSS");
+    public static SimpleDateFormat startTimeFormatShort = new SimpleDateFormat(
+        "yyyy-MM-dd'T'HH:mm:ss");
 
     private static final long serialVersionUID = 1L;
 
@@ -1145,13 +1147,18 @@ public class PolarAccessManager extends JFrame
         Date date;
         String time;
         if(startTime == null) {
-            time = "0000-00-00_000000";
+            time = "0000-00-00_00-00-00";
         } else {
             try {
                 date = startTimeFormat.parse(startTime);
                 time = fileDateFormat.format(date);
             } catch(ParseException ex) {
-                time = "0000-00-00_000000";
+                try {
+                    date = startTimeFormatShort.parse(startTime);
+                    time = fileDateFormat.format(date);
+                } catch(ParseException ex1) {
+                    time = "0000-00-00_00-00-00";
+                }
             }
         }
         String activityStr;
