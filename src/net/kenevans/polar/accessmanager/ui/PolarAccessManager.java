@@ -1,9 +1,11 @@
 package net.kenevans.polar.accessmanager.ui;
 
 import java.awt.BorderLayout;
+import java.awt.Color;
 import java.awt.Cursor;
 import java.awt.Desktop;
 import java.awt.Dimension;
+import java.awt.FlowLayout;
 import java.awt.Font;
 import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
@@ -29,15 +31,18 @@ import java.util.Map;
 import java.util.concurrent.ExecutionException;
 
 import javax.swing.ImageIcon;
+import javax.swing.JButton;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
+import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JSeparator;
 import javax.swing.JTextArea;
+import javax.swing.JToolBar;
 import javax.swing.SwingUtilities;
 import javax.swing.SwingWorker;
 import javax.swing.UIManager;
@@ -87,7 +92,7 @@ public class PolarAccessManager extends JFrame
 
     public static final String LS = System.getProperty("line.separator");
     private static final String NAME = "Polar Access Manager";
-    private static final String VERSION = "2.4.0";
+    private static final String VERSION = "2.5.0";
     private static final String HELP_TITLE = NAME + " " + VERSION;
     private static final String AUTHOR = "Written by Kenneth Evans, Jr.";
     private static final String COPYRIGHT = "Copyright (c) 2019 Kenneth Evans";
@@ -114,6 +119,8 @@ public class PolarAccessManager extends JFrame
 
     private JTextArea textArea;
     private JMenuBar menuBar;
+    private JToolBar toolBar = new JToolBar("Polar Access Manager ToolBar");
+    private JPanel controlPanel = new JPanel();
 
     private WebPageDialog webPageDialog;
 
@@ -128,7 +135,7 @@ public class PolarAccessManager extends JFrame
 
         loadUserPreferences();
 
-        // Not a prference for now
+        // Not a preference for now
         initialPrettyPrintDir = settings.getInitialTcxGpxSrcDir();
 
         // Debug WebPage
@@ -183,10 +190,106 @@ public class PolarAccessManager extends JFrame
     void uiInit() {
         this.setLayout(new BorderLayout());
 
+        // Create the tool bar
+        toolbarInit();
+        this.add(toolBar, BorderLayout.NORTH);
+
         textArea = new JTextArea(25, 30);
         textArea.setEditable(false);
         JScrollPane scrollPane = new JScrollPane(textArea);
         this.add(scrollPane, BorderLayout.CENTER);
+    }
+
+    private void toolbarInit() {
+        // Settings
+        toolBar.setFloatable(false);
+        toolBar.setRollover(true);
+        
+        // Control panel
+        // controlPanel.setBackground(Color.RED);
+        // toolBar.setBackground(Color.GREEN);
+        // controlPanel.setLayout(new BorderLayout(5, 5));
+        // controlPanel.setLayout(new BorderLayout());
+        // Use this if not using images on the buttons, it looks better
+        controlPanel.setLayout(new FlowLayout(FlowLayout.LEFT, 2, 0));
+        toolBar.add(controlPanel);
+
+        // Get TCX and Convert to GPX button
+        JButton button = makeToolBarButton(null, "Get TCX and Convert to GPX",
+            "Get TCX and Convert to GPX");
+        button.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent ev) {
+                appendLineText(LS + "getTcxAndConvertGpx");
+                BackgroundWorker worker = new BackgroundWorker(
+                    PolarAccessManager.this,
+                    PolarAccessManager.BackgroundMethodType.GetTcxConvertGpx,
+                    PolarAccessManager.this);
+                worker.execute();
+                return;
+            }
+        });
+
+        // Commit Exercise Transaction button
+        button = makeToolBarButton(null, "Commit Exercise Transaction",
+            "Commit Exercise Transaction");
+        button.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent ev) {
+                appendLineText(LS + "commitExerciseTransaction");
+                boolean res = http.commitExerciseTransaction(false);
+                if(res) {
+                    appendLineText("commitExerciseTransaction succeeded");
+                } else {
+                    appendLineText("commitExerciseTransaction failed "
+                        + http.getLastResponseCodeString());
+                }
+                return;
+            }
+        });
+
+        // // Separator
+        // toolBar.addSeparator();
+    }
+
+    /**
+     * Makes a button for the tool bar.
+     * 
+     * @param imageName Path to the image.
+     * @param toolTipText Text for the tool tip.
+     * @param altText Button text when image not found.
+     * @return The button.
+     */
+    protected JButton makeToolBarButton(String imageName, String toolTipText,
+        String altText) {
+        // Look for the image
+        URL imageURL = null;
+        if(imageName != null) {
+            imageURL = PolarAccessManager.class.getResource(imageName);
+        }
+
+        // Create and initialize the button.
+        JButton button = new JButton();
+        button.setToolTipText(toolTipText);
+        button.setForeground(new Color(229, 49, 56));
+        // Make it not have the border when selected
+        button.setFocusable(false);
+        // button.setBorderPainted(false);
+
+        if(imageName != null) {
+            if(imageURL != null) {
+                button.setIcon(new ImageIcon(imageURL, altText));
+            } else {
+                button.setText(altText);
+                Utils.errMsg("Resource not found: " + imageName);
+            }
+        } else {
+            button.setText(altText); 
+        }
+
+        // Use this if using images
+        // toolBar.add(button);
+        // Use this if using test, it looks better
+        controlPanel.add(button);
+        return button;
     }
 
     /**
@@ -491,7 +594,7 @@ public class PolarAccessManager extends JFrame
 
         // Commit transaction
         menuItem = new JMenuItem();
-        menuItem.setText("Commit exercise transaction");
+        menuItem.setText("Commit Exercise Transaction");
         menuItem.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent ae) {
                 appendLineText(LS + "commitExerciseTransaction");
