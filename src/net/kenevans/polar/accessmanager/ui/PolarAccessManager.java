@@ -19,7 +19,6 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -30,6 +29,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
 
+import javax.net.ssl.HttpsURLConnection;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JFileChooser;
@@ -92,7 +92,7 @@ public class PolarAccessManager extends JFrame
 
     public static final String LS = System.getProperty("line.separator");
     private static final String NAME = "Polar Access Manager";
-    private static final String VERSION = "2.5.1";
+    private static final String VERSION = "2.6.0";
     private static final String HELP_TITLE = NAME + " " + VERSION;
     private static final String AUTHOR = "Written by Kenneth Evans, Jr.";
     private static final String COPYRIGHT = "Copyright (c) 2019 Kenneth Evans";
@@ -1415,12 +1415,12 @@ public class PolarAccessManager extends JFrame
                 "getExerciseList() returned " + http.lastResponseMessage);
         }
         switch(http.lastResponseCode) {
-        case HttpURLConnection.HTTP_OK:
+        case HttpsURLConnection.HTTP_OK:
             break;
-        case HttpURLConnection.HTTP_NO_CONTENT:
+        case HttpsURLConnection.HTTP_NO_CONTENT:
             appendLineText("There are no exercises");
             return;
-        case HttpURLConnection.HTTP_NOT_FOUND:
+        case HttpsURLConnection.HTTP_NOT_FOUND:
             appendLineText("May need a new transaction-id, wait a few minutes");
             return;
         default:
@@ -1478,12 +1478,12 @@ public class PolarAccessManager extends JFrame
                 "getActivityList() returned " + http.lastResponseMessage);
         }
         switch(http.lastResponseCode) {
-        case HttpURLConnection.HTTP_OK:
+        case HttpsURLConnection.HTTP_OK:
             break;
-        case HttpURLConnection.HTTP_NO_CONTENT:
+        case HttpsURLConnection.HTTP_NO_CONTENT:
             appendLineText("There are no activities");
             return;
-        case HttpURLConnection.HTTP_NOT_FOUND:
+        case HttpsURLConnection.HTTP_NOT_FOUND:
             appendLineText("May need a new transaction-id, wait a few minutes");
             return;
         default:
@@ -1540,12 +1540,12 @@ public class PolarAccessManager extends JFrame
                 "getPhysicalInfoList() returned " + http.lastResponseMessage);
         }
         switch(http.lastResponseCode) {
-        case HttpURLConnection.HTTP_OK:
+        case HttpsURLConnection.HTTP_OK:
             break;
-        case HttpURLConnection.HTTP_NO_CONTENT:
+        case HttpsURLConnection.HTTP_NO_CONTENT:
             appendLineText("There are no physical informations");
             return;
-        case HttpURLConnection.HTTP_NOT_FOUND:
+        case HttpsURLConnection.HTTP_NOT_FOUND:
             appendLineText("May need a new transaction-id, wait a few minutes");
             return;
         default:
@@ -1610,12 +1610,12 @@ public class PolarAccessManager extends JFrame
                 "getExerciseList() returned " + http.lastResponseMessage);
         }
         switch(http.lastResponseCode) {
-        case HttpURLConnection.HTTP_OK:
+        case HttpsURLConnection.HTTP_OK:
             break;
-        case HttpURLConnection.HTTP_NO_CONTENT:
+        case HttpsURLConnection.HTTP_NO_CONTENT:
             appendLineText("There are no exercises");
             return;
-        case HttpURLConnection.HTTP_NOT_FOUND:
+        case HttpsURLConnection.HTTP_NOT_FOUND:
             appendLineText("May need a new transaction-id, wait a few minutes");
             return;
         default:
@@ -1792,12 +1792,12 @@ public class PolarAccessManager extends JFrame
                 "getExerciseList() returned " + http.lastResponseMessage);
         }
         switch(http.lastResponseCode) {
-        case HttpURLConnection.HTTP_OK:
+        case HttpsURLConnection.HTTP_OK:
             break;
-        case HttpURLConnection.HTTP_NO_CONTENT:
+        case HttpsURLConnection.HTTP_NO_CONTENT:
             appendLineText("There are no exercises");
             return;
-        case HttpURLConnection.HTTP_NOT_FOUND:
+        case HttpsURLConnection.HTTP_NOT_FOUND:
             appendLineText("May need a new transaction-id, wait a few minutes");
             return;
         default:

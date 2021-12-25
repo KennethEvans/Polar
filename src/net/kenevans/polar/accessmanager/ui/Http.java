@@ -1,11 +1,11 @@
 package net.kenevans.polar.accessmanager.ui;
 
-import java.net.HttpURLConnection;
 import java.text.BreakIterator;
 import java.util.Base64;
 import java.util.List;
 import java.util.Map;
 
+import javax.net.ssl.HttpsURLConnection;
 import javax.swing.JOptionPane;
 
 import com.google.gson.Gson;
@@ -337,7 +337,7 @@ public class Http implements IConstants
         }
 
         int responseCode = lastResponseCode = req.getResponseCode();
-        if(responseCode != HttpURLConnection.HTTP_OK) {
+        if(responseCode != HttpsURLConnection.HTTP_OK) {
             lastResponseMessage = "getToken Failed: "
                 + getLastResponseCodeString();
             String error = req.getError();
@@ -391,7 +391,7 @@ public class Http implements IConstants
         }
 
         int responseCode = lastResponseCode = req.getResponseCode();
-        if(responseCode != HttpURLConnection.HTTP_OK) {
+        if(responseCode != HttpsURLConnection.HTTP_OK) {
             lastResponseMessage = "registerUser Failed: "
                 + getLastResponseCodeString();
             // String error = req.getError();
@@ -437,7 +437,7 @@ public class Http implements IConstants
         req.setRequestProperty("Accept", "application/json");
 
         int responseCode = lastResponseCode = req.getResponseCode();
-        if(responseCode != HttpURLConnection.HTTP_OK) {
+        if(responseCode != HttpsURLConnection.HTTP_OK) {
             lastResponseMessage = "getUserInformation Failed: "
                 + getLastResponseCodeString();
             // if(error != null) {
@@ -491,7 +491,7 @@ public class Http implements IConstants
         req.setAuthorization(Request.AuthMode.BEARER, getToken());
 
         int responseCode = lastResponseCode = req.getResponseCode();
-        if(responseCode != HttpURLConnection.HTTP_NO_CONTENT) {
+        if(responseCode != HttpsURLConnection.HTTP_NO_CONTENT) {
             lastResponseMessage = "deleteUser Failed: "
                 + getLastResponseCodeString();
             // String error = req.getError();
@@ -524,7 +524,7 @@ public class Http implements IConstants
         }
 
         int responseCode = lastResponseCode = req.getResponseCode();
-        if(responseCode != HttpURLConnection.HTTP_OK) {
+        if(responseCode != HttpsURLConnection.HTTP_OK) {
             lastResponseMessage = "listNotifications Failed: "
                 + getLastResponseCodeString();
             String error = req.getError();
@@ -571,7 +571,7 @@ public class Http implements IConstants
         req.setRequestProperty("Accept", "application/json");
 
         int responseCode = lastResponseCode = req.getResponseCode();
-        if(responseCode != HttpURLConnection.HTTP_OK) {
+        if(responseCode != HttpsURLConnection.HTTP_OK) {
             lastResponseMessage = "getExercisesHash Failed: "
                 + getLastResponseCodeString();
             String error = req.getError();
@@ -616,7 +616,7 @@ public class Http implements IConstants
         req.setRequestProperty("Accept", "application/json");
 
         int responseCode = lastResponseCode = req.getResponseCode();
-        if(responseCode != HttpURLConnection.HTTP_CREATED) {
+        if(responseCode != HttpsURLConnection.HTTP_CREATED) {
             lastResponseMessage = "getTranslationLocation Failed: "
                 + getLastResponseCodeString();
             String error = req.getError();
@@ -667,7 +667,7 @@ public class Http implements IConstants
         req.setRequestProperty("Accept", "application/json");
 
         int responseCode = lastResponseCode = req.getResponseCode();
-        if(responseCode != HttpURLConnection.HTTP_CREATED) {
+        if(responseCode != HttpsURLConnection.HTTP_CREATED) {
             lastResponseMessage = "getTranslationLocation Failed: "
                 + getLastResponseCodeString();
             String error = req.getError();
@@ -720,7 +720,7 @@ public class Http implements IConstants
         req.setRequestProperty("Accept", "application/json");
 
         int responseCode = lastResponseCode = req.getResponseCode();
-        if(responseCode != HttpURLConnection.HTTP_CREATED) {
+        if(responseCode != HttpsURLConnection.HTTP_CREATED) {
             lastResponseMessage = "getTranslationLocation Failed: "
                 + getLastResponseCodeString();
             String error = req.getError();
@@ -789,7 +789,7 @@ public class Http implements IConstants
         req.setAuthorization(Request.AuthMode.BEARER, getToken());
 
         int responseCode = lastResponseCode = req.getResponseCode();
-        if(responseCode != HttpURLConnection.HTTP_OK) {
+        if(responseCode != HttpsURLConnection.HTTP_OK) {
             lastResponseMessage = "commitExerciseTransaction Failed: "
                 + getLastResponseCodeString();
             String error = req.getError();
@@ -840,7 +840,7 @@ public class Http implements IConstants
         req.setAuthorization(Request.AuthMode.BEARER, getToken());
 
         int responseCode = lastResponseCode = req.getResponseCode();
-        if(responseCode != HttpURLConnection.HTTP_OK) {
+        if(responseCode != HttpsURLConnection.HTTP_OK) {
             lastResponseMessage = "commitActivityTransaction Failed: "
                 + getLastResponseCodeString();
             String error = req.getError();
@@ -892,7 +892,7 @@ public class Http implements IConstants
         req.setAuthorization(Request.AuthMode.BEARER, getToken());
 
         int responseCode = lastResponseCode = req.getResponseCode();
-        if(responseCode != HttpURLConnection.HTTP_OK) {
+        if(responseCode != HttpsURLConnection.HTTP_OK) {
             lastResponseMessage = "commitPhysicalInfoTransaction Failed: "
                 + getLastResponseCodeString();
             String error = req.getError();
@@ -933,7 +933,7 @@ public class Http implements IConstants
         req.setAuthorization(Request.AuthMode.BEARER, getToken());
         req.setRequestProperty("Accept", "application/json");
         int responseCode = lastResponseCode = req.getResponseCode();
-        if(responseCode != HttpURLConnection.HTTP_OK) {
+        if(responseCode != HttpsURLConnection.HTTP_OK) {
             lastResponseMessage = "getExerciseList: "
                 + getLastResponseCodeString();
             String error = req.getError();
@@ -994,7 +994,7 @@ public class Http implements IConstants
         req.setAuthorization(Request.AuthMode.BEARER, getToken());
         req.setRequestProperty("Accept", "application/json");
         int responseCode = lastResponseCode = req.getResponseCode();
-        if(responseCode != HttpURLConnection.HTTP_OK) {
+        if(responseCode != HttpsURLConnection.HTTP_OK) {
             lastResponseMessage = "getActivityList: "
                 + getLastResponseCodeString();
             String error = req.getError();
@@ -1056,7 +1056,7 @@ public class Http implements IConstants
         req.setAuthorization(Request.AuthMode.BEARER, getToken());
         req.setRequestProperty("Accept", "application/json");
         int responseCode = lastResponseCode = req.getResponseCode();
-        if(responseCode != HttpURLConnection.HTTP_OK) {
+        if(responseCode != HttpsURLConnection.HTTP_OK) {
             lastResponseMessage = "getPhysicalInfoList: "
                 + getLastResponseCodeString();
             String error = req.getError();
@@ -1117,7 +1117,7 @@ public class Http implements IConstants
         req.setRequestProperty("Accept", "application/json");
 
         int responseCode = lastResponseCode = req.getResponseCode();
-        if(responseCode != HttpURLConnection.HTTP_OK) {
+        if(responseCode != HttpsURLConnection.HTTP_OK) {
             lastResponseMessage = "getExerciseSummary: "
                 + getLastResponseCodeString();
             String error = req.getError();
@@ -1168,7 +1168,7 @@ public class Http implements IConstants
         req.setRequestProperty("Accept", "application/json");
 
         int responseCode = lastResponseCode = req.getResponseCode();
-        if(responseCode != HttpURLConnection.HTTP_OK) {
+        if(responseCode != HttpsURLConnection.HTTP_OK) {
             lastResponseMessage = "getctivitySummary: "
                 + getLastResponseCodeString();
             String error = req.getError();
@@ -1220,7 +1220,7 @@ public class Http implements IConstants
         req.setRequestProperty("Accept", "application/json");
 
         int responseCode = lastResponseCode = req.getResponseCode();
-        if(responseCode != HttpURLConnection.HTTP_OK) {
+        if(responseCode != HttpsURLConnection.HTTP_OK) {
             lastResponseMessage = "getExerciseSummary: "
                 + getLastResponseCodeString();
             String error = req.getError();
@@ -1271,7 +1271,7 @@ public class Http implements IConstants
         req.setRequestProperty("Accept", "application/gpx+xml");
 
         int responseCode = lastResponseCode = req.getResponseCode();
-        if(responseCode != HttpURLConnection.HTTP_OK) {
+        if(responseCode != HttpsURLConnection.HTTP_OK) {
             lastResponseMessage = "getGpx: " + getLastResponseCodeString();
             String error = req.getError();
             if(error != null) {
@@ -1309,7 +1309,7 @@ public class Http implements IConstants
         req.setRequestProperty("Accept", "application/vnd.garmin.tcx+xml");
 
         int responseCode = lastResponseCode = req.getResponseCode();
-        if(responseCode != HttpURLConnection.HTTP_OK) {
+        if(responseCode != HttpsURLConnection.HTTP_OK) {
             lastResponseMessage = "getTcx: " + getLastResponseCodeString();
             String error = req.getError();
             if(error != null) {

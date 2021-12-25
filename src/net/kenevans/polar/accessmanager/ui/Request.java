@@ -8,14 +8,17 @@ import java.io.InputStreamReader;
 import java.io.Reader;
 import java.io.StringWriter;
 import java.io.Writer;
-import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
+import java.security.SecureRandom;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.zip.GZIPInputStream;
+
+import javax.net.ssl.HttpsURLConnection;
+import javax.net.ssl.SSLContext;
 
 /*
  * Created on Feb 8, 2019
@@ -28,46 +31,47 @@ public class Request
     private static final Map<Integer, String> HTTP_CODES = new HashMap<Integer, String>() {
         private static final long serialVersionUID = 1L;
         {
-            put(HttpURLConnection.HTTP_ACCEPTED, "Accepted");
-            put(HttpURLConnection.HTTP_BAD_GATEWAY, "Bad Gateway");
-            put(HttpURLConnection.HTTP_BAD_METHOD, "Method Not Allowed");
-            put(HttpURLConnection.HTTP_BAD_REQUEST, "Bad Request");
-            put(HttpURLConnection.HTTP_CLIENT_TIMEOUT, "Request Time-Out");
-            put(HttpURLConnection.HTTP_CONFLICT, "Conflict");
-            put(HttpURLConnection.HTTP_CREATED, "Created");
-            put(HttpURLConnection.HTTP_ENTITY_TOO_LARGE,
+            put(HttpsURLConnection.HTTP_ACCEPTED, "Accepted");
+            put(HttpsURLConnection.HTTP_BAD_GATEWAY, "Bad Gateway");
+            put(HttpsURLConnection.HTTP_BAD_METHOD, "Method Not Allowed");
+            put(HttpsURLConnection.HTTP_BAD_REQUEST, "Bad Request");
+            put(HttpsURLConnection.HTTP_CLIENT_TIMEOUT, "Request Time-Out");
+            put(HttpsURLConnection.HTTP_CONFLICT, "Conflict");
+            put(HttpsURLConnection.HTTP_CREATED, "Created");
+            put(HttpsURLConnection.HTTP_ENTITY_TOO_LARGE,
                 "Request Entity Too Large");
-            put(HttpURLConnection.HTTP_FORBIDDEN, "Forbidden");
-            put(HttpURLConnection.HTTP_GATEWAY_TIMEOUT, "Gateway Timeout");
-            put(HttpURLConnection.HTTP_GONE, "Gone");
-            put(HttpURLConnection.HTTP_INTERNAL_ERROR, "Internal Server Error");
-            put(HttpURLConnection.HTTP_LENGTH_REQUIRED, "Length Required");
-            put(HttpURLConnection.HTTP_MOVED_PERM, "Moved Permanently");
-            put(HttpURLConnection.HTTP_MOVED_TEMP, "Temporary Redirect");
-            put(HttpURLConnection.HTTP_MULT_CHOICE, "Multiple Choices");
-            put(HttpURLConnection.HTTP_NO_CONTENT, "No Content");
-            put(HttpURLConnection.HTTP_NOT_ACCEPTABLE, "Not Acceptable");
-            put(HttpURLConnection.HTTP_NOT_AUTHORITATIVE,
+            put(HttpsURLConnection.HTTP_FORBIDDEN, "Forbidden");
+            put(HttpsURLConnection.HTTP_GATEWAY_TIMEOUT, "Gateway Timeout");
+            put(HttpsURLConnection.HTTP_GONE, "Gone");
+            put(HttpsURLConnection.HTTP_INTERNAL_ERROR,
+                "Internal Server Error");
+            put(HttpsURLConnection.HTTP_LENGTH_REQUIRED, "Length Required");
+            put(HttpsURLConnection.HTTP_MOVED_PERM, "Moved Permanently");
+            put(HttpsURLConnection.HTTP_MOVED_TEMP, "Temporary Redirect");
+            put(HttpsURLConnection.HTTP_MULT_CHOICE, "Multiple Choices");
+            put(HttpsURLConnection.HTTP_NO_CONTENT, "No Content");
+            put(HttpsURLConnection.HTTP_NOT_ACCEPTABLE, "Not Acceptable");
+            put(HttpsURLConnection.HTTP_NOT_AUTHORITATIVE,
                 "Non-Authoritative Information");
-            put(HttpURLConnection.HTTP_NOT_FOUND, "Not Found");
-            put(HttpURLConnection.HTTP_NOT_IMPLEMENTED, "Not Implemented");
-            put(HttpURLConnection.HTTP_NOT_MODIFIED, "Not Modified");
-            put(HttpURLConnection.HTTP_OK, "OK");
-            put(HttpURLConnection.HTTP_PARTIAL, "Partial Content");
-            put(HttpURLConnection.HTTP_PAYMENT_REQUIRED, "Payment Required");
-            put(HttpURLConnection.HTTP_PRECON_FAILED, "Precondition Failed");
-            put(HttpURLConnection.HTTP_PROXY_AUTH,
+            put(HttpsURLConnection.HTTP_NOT_FOUND, "Not Found");
+            put(HttpsURLConnection.HTTP_NOT_IMPLEMENTED, "Not Implemented");
+            put(HttpsURLConnection.HTTP_NOT_MODIFIED, "Not Modified");
+            put(HttpsURLConnection.HTTP_OK, "OK");
+            put(HttpsURLConnection.HTTP_PARTIAL, "Partial Content");
+            put(HttpsURLConnection.HTTP_PAYMENT_REQUIRED, "Payment Required");
+            put(HttpsURLConnection.HTTP_PRECON_FAILED, "Precondition Failed");
+            put(HttpsURLConnection.HTTP_PROXY_AUTH,
                 "Proxy Authentication Required");
-            put(HttpURLConnection.HTTP_REQ_TOO_LONG, "Request-URI Too Large");
-            put(HttpURLConnection.HTTP_RESET, "Reset Content");
-            put(HttpURLConnection.HTTP_SEE_OTHER, "See Other");
-            put(HttpURLConnection.HTTP_UNAUTHORIZED, "Unauthorized");
-            put(HttpURLConnection.HTTP_UNAVAILABLE, "Service Unavailable");
-            put(HttpURLConnection.HTTP_UNSUPPORTED_TYPE,
+            put(HttpsURLConnection.HTTP_REQ_TOO_LONG, "Request-URI Too Large");
+            put(HttpsURLConnection.HTTP_RESET, "Reset Content");
+            put(HttpsURLConnection.HTTP_SEE_OTHER, "See Other");
+            put(HttpsURLConnection.HTTP_UNAUTHORIZED, "Unauthorized");
+            put(HttpsURLConnection.HTTP_UNAVAILABLE, "Service Unavailable");
+            put(HttpsURLConnection.HTTP_UNSUPPORTED_TYPE,
                 "Unsupported Media Type");
-            put(HttpURLConnection.HTTP_USE_PROXY, "Use Proxy");
-            put(HttpURLConnection.HTTP_VERSION,
-                "put(HttpURLConnection.HTTP Version Not Supported");
+            put(HttpsURLConnection.HTTP_USE_PROXY, "Use Proxy");
+            put(HttpsURLConnection.HTTP_VERSION,
+                "put(HttpsURLConnection.HTTP Version Not Supported");
         }
     };
 
@@ -80,7 +84,7 @@ public class Request
     };
 
     public URL url;
-    public HttpURLConnection conn;
+    public HttpsURLConnection conn;
     boolean error = false;
     public String lastError;
 
@@ -98,16 +102,24 @@ public class Request
         }
         // Get the connection
         try {
-            conn = (HttpURLConnection)url.openConnection();
+            conn = (HttpsURLConnection)url.openConnection();
+            SSLContext sslContext = SSLContext.getInstance("TLSv1.3");
+            sslContext.init(null, null, new SecureRandom());
+            conn.setSSLSocketFactory(sslContext.getSocketFactory());
             conn.setRequestMethod(method.toString());
-        } catch(IOException ex) {
+        } catch(Exception ex) {
             error = true;
-            lastError = "Failed to creat HttpURLConnection" + LS
+            lastError = "Failed to create HttpsURLConnection" + LS
                 + ex.getMessage();
             return;
         }
         if(method == Method.POST || method == Method.PUT) {
-            conn.setDoOutput(true);
+            // DEBUG
+            try {
+                conn.setDoOutput(true);
+            } catch(Exception ex) {
+                ex.printStackTrace();
+            }
         }
     }
 
