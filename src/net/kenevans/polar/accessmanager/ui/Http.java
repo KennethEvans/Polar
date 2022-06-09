@@ -616,6 +616,9 @@ public class Http implements IConstants
         req.setRequestProperty("Accept", "application/json");
 
         int responseCode = lastResponseCode = req.getResponseCode();
+        if(debug) {
+            System.out.println("*** Returned " + getLastResponseCodeString());
+        }
         if(responseCode != HttpsURLConnection.HTTP_CREATED) {
             lastResponseMessage = "getTranslationLocation Failed: "
                 + getLastResponseCodeString();
@@ -892,6 +895,9 @@ public class Http implements IConstants
         req.setAuthorization(Request.AuthMode.BEARER, getToken());
 
         int responseCode = lastResponseCode = req.getResponseCode();
+        if(debug) {
+            System.out.println("*** Returned " + getLastResponseCodeString());
+        }
         if(responseCode != HttpsURLConnection.HTTP_OK) {
             lastResponseMessage = "commitPhysicalInfoTransaction Failed: "
                 + getLastResponseCodeString();
@@ -931,8 +937,23 @@ public class Http implements IConstants
             System.out.println("*** " + req.url);
         }
         req.setAuthorization(Request.AuthMode.BEARER, getToken());
+        // This doesn't work because the Authorization key will not be in the map
+        // if(debug) {
+        // Map<String, List<String>> map = req.conn.getRequestProperties();
+        // System.out.println("map.size:" + map.size());
+        // for(Map.Entry<String, List<String>> entry : map.entrySet()) {
+        // String key = entry.getKey();
+        // List<String> value = entry.getValue();
+        // for(String item : value) {
+        // System.out.println(" " + key + " : " + item);
+        // }
+        // }
+        // }
         req.setRequestProperty("Accept", "application/json");
         int responseCode = lastResponseCode = req.getResponseCode();
+        if(debug) {
+            System.out.println("*** Returned " + getLastResponseCodeString());
+        }
         if(responseCode != HttpsURLConnection.HTTP_OK) {
             lastResponseMessage = "getExerciseList: "
                 + getLastResponseCodeString();
@@ -1309,6 +1330,9 @@ public class Http implements IConstants
         req.setRequestProperty("Accept", "application/vnd.garmin.tcx+xml");
 
         int responseCode = lastResponseCode = req.getResponseCode();
+        if(debug) {
+            System.out.println("*** Returned " + getLastResponseCodeString());
+        }
         if(responseCode != HttpsURLConnection.HTTP_OK) {
             lastResponseMessage = "getTcx: " + getLastResponseCodeString();
             String error = req.getError();
@@ -1320,7 +1344,15 @@ public class Http implements IConstants
             }
             return null;
         }
-        String tcx = req.getUnzippedInput();
+        // Used to be GZIP'ed, not as of June 2022
+        //String tcx = req.getUnzippedInput();
+        String tcx = req.getInput();
+        if(debug) {
+            System.out.println("*** tcx=" + tcx);
+        }
+        if(tcx == null) {
+            lastResponseMessage = "getTcx: " + req.lastError;
+        }
         return tcx;
     }
 

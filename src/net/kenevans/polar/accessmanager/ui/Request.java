@@ -236,7 +236,7 @@ public class Request
                 return null;
             }
             gis = new GZIPInputStream(is);
-            if(is == null) {
+            if(gis == null) {
                 lastError = "Cannot get gzip input stream";
                 return null;
             }

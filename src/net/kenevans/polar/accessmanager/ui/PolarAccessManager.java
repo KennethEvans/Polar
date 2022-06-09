@@ -92,7 +92,7 @@ public class PolarAccessManager extends JFrame
 
     public static final String LS = System.getProperty("line.separator");
     private static final String NAME = "Polar Access Manager";
-    private static final String VERSION = "2.6.0";
+    private static final String VERSION = "2.7.0";
     private static final String HELP_TITLE = NAME + " " + VERSION;
     private static final String AUTHOR = "Written by Kenneth Evans, Jr.";
     private static final String COPYRIGHT = "Copyright (c) 2019 Kenneth Evans";
@@ -204,7 +204,7 @@ public class PolarAccessManager extends JFrame
         // Settings
         toolBar.setFloatable(false);
         toolBar.setRollover(true);
-        
+
         // Control panel
         // controlPanel.setBackground(Color.RED);
         // toolBar.setBackground(Color.GREEN);
@@ -282,7 +282,7 @@ public class PolarAccessManager extends JFrame
                 Utils.errMsg("Resource not found: " + imageName);
             }
         } else {
-            button.setText(altText); 
+            button.setText(altText);
         }
 
         // Use this if using images
@@ -1408,6 +1408,13 @@ public class PolarAccessManager extends JFrame
         http.getExerciseTransactionLocation(false);
         appendLineText("getExerciseTranslationLocation() returned "
             + http.getLastResponseCodeString());
+        // Gives HTTP_CREATED the first time and HTTP_NO_CONTENT if already
+        // created
+        if(http.lastResponseCode != HttpsURLConnection.HTTP_CREATED
+            && http.lastResponseCode != HttpsURLConnection.HTTP_NO_CONTENT) {
+            appendLineText(http.lastResponseMessage);
+            return;
+        }
         // Get the exerciseList
         Exercises exercises = http.getExerciseList(false);
         if(!http.lastResponseMessage.isEmpty()) {
@@ -1603,6 +1610,13 @@ public class PolarAccessManager extends JFrame
         http.getExerciseTransactionLocation(false);
         appendLineText("getExerciseTranslationLocation() returned "
             + http.getLastResponseCodeString());
+        // Gives HTTP_CREATED the first time and HTTP_NO_CONTENT if already
+        // created
+        if(http.lastResponseCode != HttpsURLConnection.HTTP_CREATED
+            && http.lastResponseCode != HttpsURLConnection.HTTP_NO_CONTENT) {
+            appendLineText(http.lastResponseMessage);
+            return;
+        }
         // Get the exerciseList
         Exercises exercises = http.getExerciseList(false);
         if(!http.lastResponseMessage.isEmpty()) {
@@ -1785,6 +1799,13 @@ public class PolarAccessManager extends JFrame
         http.getExerciseTransactionLocation(false);
         appendLineText("getExerciseTranslationLocation() returned "
             + http.getLastResponseCodeString());
+        // Gives HTTP_CREATED the first time and HTTP_NO_CONTENT if already
+        // created
+        if(http.lastResponseCode != HttpsURLConnection.HTTP_CREATED
+            && http.lastResponseCode != HttpsURLConnection.HTTP_NO_CONTENT) {
+            appendLineText(http.lastResponseMessage);
+            return;
+        }
         // Get the exerciseList
         Exercises exercises = http.getExerciseList(false);
         if(!http.lastResponseMessage.isEmpty()) {

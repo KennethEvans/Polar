@@ -51,7 +51,7 @@ public class MergeTcxAndGpxToGpx implements IConstants
             tcx = TCXParser.parse(tcxFile);
         } catch(JAXBException ex) {
             manager.appendLineText(
-                "Failed to parse " + tcxFile.getPath() + LS + ex.getMessage());
+                "Failed to parse TCX " + tcxFile.getPath() + LS + ex.getMessage());
             return false;
         }
         GpxType gpxNew = TCXParser.convertTCXtoGpx(tcx);
@@ -230,7 +230,7 @@ public class MergeTcxAndGpxToGpx implements IConstants
             gpxFile = GPXParser.parse(file);
         } catch(JAXBException ex) {
             manager.appendLineText(
-                "Failed to parse " + file.getPath() + LS + ex.getMessage());
+                "Failed to parse GPX " + file.getPath() + LS + ex.getMessage());
             return null;
         }
         if(gpxFile == null) {
